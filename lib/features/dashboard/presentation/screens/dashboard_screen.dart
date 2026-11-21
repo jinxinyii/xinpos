@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -12,18 +12,10 @@ class DashboardScreen extends StatelessWidget {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'xinPOS',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('xinPOS', style: TextStyle(fontWeight: FontWeight.bold)),
             Text(
               'Business Overview',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.normal,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
             ),
           ],
         ),
@@ -172,11 +164,7 @@ class DashboardMetricCard extends StatelessWidget {
                 color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 22,
-              ),
+              child: Icon(icon, color: color, size: 22),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

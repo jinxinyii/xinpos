@@ -1,13 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 class MainScaffold extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
-  const MainScaffold({
-    super.key,
-    required this.navigationShell,
-  });
+  const MainScaffold({super.key, required this.navigationShell});
 
   static const List<NavigationDestination> destinations = [
     NavigationDestination(
@@ -67,9 +64,7 @@ class MainScaffold extends StatelessWidget {
                   }).toList(),
                 ),
                 const VerticalDivider(width: 1),
-                Expanded(
-                  child: navigationShell,
-                ),
+                Expanded(child: navigationShell),
               ],
             ),
           );

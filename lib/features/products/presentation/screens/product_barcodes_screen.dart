@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:xinpos/shared/widgets/app_notification.dart';
+
 import '../providers/barcode_providers.dart';
 import '../providers/product_details_provider.dart';
 
@@ -32,14 +34,20 @@ class ProductBarcodesScreen extends ConsumerWidget {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Barcode added successfully.')),
+        AppSnackBar(
+          context: context,
+          content: Text('Barcode added successfully.'),
+        ),
       );
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Unable to add barcode: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(
+          context: context,
+          content: Text('Unable to add barcode: $error'),
+        ),
+      );
     }
   }
 
@@ -85,13 +93,19 @@ class ProductBarcodesScreen extends ConsumerWidget {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Barcode removed successfully.')),
+        AppSnackBar(
+          context: context,
+          content: Text('Barcode removed successfully.'),
+        ),
       );
     } catch (error) {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to remove barcode: $error')),
+        AppSnackBar(
+          context: context,
+          content: Text('Unable to remove barcode: $error'),
+        ),
       );
     }
   }

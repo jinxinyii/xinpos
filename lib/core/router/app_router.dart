@@ -1,4 +1,3 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -11,7 +10,14 @@ import '../../features/products/presentation/screens/product_details_screen.dart
 import '../../features/products/presentation/screens/stock_management_screen.dart';
 import '../../features/products/presentation/screens/product_barcodes_screen.dart';
 import '../../features/products/presentation/screens/barcode_scanner_screen.dart';
-import '../../shared/widgets/feature_placeholder.dart';
+import '../../features/sales/presentation/screens/sales_history_screen.dart';
+import '../../features/sales/presentation/screens/sale_details_screen.dart';
+import '../../features/sales/presentation/screens/queue_management_screen.dart';
+import '../../features/reports/presentation/screens/sales_reports_screen.dart';
+import '../../features/expenses/presentation/screens/expenses_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/screens/printer_settings_screen.dart';
+import '../../features/reports/presentation/screens/profit_report_screen.dart';
 import 'main_scaffold.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -86,11 +92,49 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/sales',
-              builder: (context, state) => const FeaturePlaceholder(
-                title: 'Sales History',
-                description: 'Review your transactions and sales records.',
-                icon: Icons.receipt_long_rounded,
-              ),
+              builder: (context, state) => const SalesHistoryScreen(),
+              routes: [
+                GoRoute(
+                  path: 'reports',
+                  builder: (context, state) => const SalesReportsScreen(),
+                ),
+                GoRoute(
+                  path: ':saleId',
+                  builder: (context, state) => SaleDetailsScreen(
+                    saleId: state.pathParameters['saleId']!,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/queue',
+              builder: (context, state) => const QueueManagementScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/expenses',
+              builder: (context, state) => const ExpensesScreen(),
+              routes: [
+                GoRoute(
+                  path: 'profit',
+                  builder: (context, state) => const ProfitReportScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/profit',
+              builder: (context, state) => const ProfitReportScreen(),
             ),
           ],
         ),
@@ -98,11 +142,13 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/settings',
-              builder: (context, state) => const FeaturePlaceholder(
-                title: 'Settings',
-                description: 'Manage your business and application settings.',
-                icon: Icons.settings_rounded,
-              ),
+              builder: (context, state) => const SettingsScreen(),
+              routes: [
+                GoRoute(
+                  path: 'printer',
+                  builder: (context, state) => const PrinterSettingsScreen(),
+                ),
+              ],
             ),
           ],
         ),

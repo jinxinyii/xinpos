@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:xinpos/shared/widgets/app_notification.dart';
+
 import '../providers/category_management_provider.dart';
 import '../providers/category_providers.dart';
 
@@ -64,13 +66,17 @@ class CategoriesScreen extends ConsumerWidget {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category archived successfully.')),
+        AppSnackBar(
+          context: context,
+          content: Text('Category archived successfully.'),
+        ),
       );
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(context: context, content: Text(error.toString())),
+      );
     }
   }
 
@@ -271,8 +277,9 @@ class _CategoryFormDialogState extends ConsumerState<_CategoryFormDialog> {
 
       setState(() => _isSaving = false);
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(context: context, content: Text(error.toString())),
+      );
     }
   }
 

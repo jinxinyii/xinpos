@@ -5581,6 +5581,798 @@ class SyncConflictsCompanion extends UpdateCompanion<SyncConflict> {
   }
 }
 
+class $QueueDailyCountersTable extends QueueDailyCounters
+    with TableInfo<$QueueDailyCountersTable, QueueDailyCounter> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $QueueDailyCountersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _queueDateMeta = const VerificationMeta(
+    'queueDate',
+  );
+  @override
+  late final GeneratedColumn<String> queueDate = GeneratedColumn<String>(
+    'queue_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastNumberMeta = const VerificationMeta(
+    'lastNumber',
+  );
+  @override
+  late final GeneratedColumn<int> lastNumber = GeneratedColumn<int>(
+    'last_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [queueDate, lastNumber];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'queue_daily_counters';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<QueueDailyCounter> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('queue_date')) {
+      context.handle(
+        _queueDateMeta,
+        queueDate.isAcceptableOrUnknown(data['queue_date']!, _queueDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_queueDateMeta);
+    }
+    if (data.containsKey('last_number')) {
+      context.handle(
+        _lastNumberMeta,
+        lastNumber.isAcceptableOrUnknown(data['last_number']!, _lastNumberMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lastNumberMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {queueDate};
+  @override
+  QueueDailyCounter map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return QueueDailyCounter(
+      queueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}queue_date'],
+      )!,
+      lastNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_number'],
+      )!,
+    );
+  }
+
+  @override
+  $QueueDailyCountersTable createAlias(String alias) {
+    return $QueueDailyCountersTable(attachedDatabase, alias);
+  }
+}
+
+class QueueDailyCounter extends DataClass
+    implements Insertable<QueueDailyCounter> {
+  final String queueDate;
+  final int lastNumber;
+  const QueueDailyCounter({required this.queueDate, required this.lastNumber});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['queue_date'] = Variable<String>(queueDate);
+    map['last_number'] = Variable<int>(lastNumber);
+    return map;
+  }
+
+  QueueDailyCountersCompanion toCompanion(bool nullToAbsent) {
+    return QueueDailyCountersCompanion(
+      queueDate: Value(queueDate),
+      lastNumber: Value(lastNumber),
+    );
+  }
+
+  factory QueueDailyCounter.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return QueueDailyCounter(
+      queueDate: serializer.fromJson<String>(json['queueDate']),
+      lastNumber: serializer.fromJson<int>(json['lastNumber']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'queueDate': serializer.toJson<String>(queueDate),
+      'lastNumber': serializer.toJson<int>(lastNumber),
+    };
+  }
+
+  QueueDailyCounter copyWith({String? queueDate, int? lastNumber}) =>
+      QueueDailyCounter(
+        queueDate: queueDate ?? this.queueDate,
+        lastNumber: lastNumber ?? this.lastNumber,
+      );
+  QueueDailyCounter copyWithCompanion(QueueDailyCountersCompanion data) {
+    return QueueDailyCounter(
+      queueDate: data.queueDate.present ? data.queueDate.value : this.queueDate,
+      lastNumber: data.lastNumber.present
+          ? data.lastNumber.value
+          : this.lastNumber,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QueueDailyCounter(')
+          ..write('queueDate: $queueDate, ')
+          ..write('lastNumber: $lastNumber')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(queueDate, lastNumber);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is QueueDailyCounter &&
+          other.queueDate == this.queueDate &&
+          other.lastNumber == this.lastNumber);
+}
+
+class QueueDailyCountersCompanion extends UpdateCompanion<QueueDailyCounter> {
+  final Value<String> queueDate;
+  final Value<int> lastNumber;
+  final Value<int> rowid;
+  const QueueDailyCountersCompanion({
+    this.queueDate = const Value.absent(),
+    this.lastNumber = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  QueueDailyCountersCompanion.insert({
+    required String queueDate,
+    required int lastNumber,
+    this.rowid = const Value.absent(),
+  }) : queueDate = Value(queueDate),
+       lastNumber = Value(lastNumber);
+  static Insertable<QueueDailyCounter> custom({
+    Expression<String>? queueDate,
+    Expression<int>? lastNumber,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (queueDate != null) 'queue_date': queueDate,
+      if (lastNumber != null) 'last_number': lastNumber,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  QueueDailyCountersCompanion copyWith({
+    Value<String>? queueDate,
+    Value<int>? lastNumber,
+    Value<int>? rowid,
+  }) {
+    return QueueDailyCountersCompanion(
+      queueDate: queueDate ?? this.queueDate,
+      lastNumber: lastNumber ?? this.lastNumber,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (queueDate.present) {
+      map['queue_date'] = Variable<String>(queueDate.value);
+    }
+    if (lastNumber.present) {
+      map['last_number'] = Variable<int>(lastNumber.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QueueDailyCountersCompanion(')
+          ..write('queueDate: $queueDate, ')
+          ..write('lastNumber: $lastNumber, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $QueueEntriesTable extends QueueEntries
+    with TableInfo<$QueueEntriesTable, QueueEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $QueueEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _saleIdMeta = const VerificationMeta('saleId');
+  @override
+  late final GeneratedColumn<String> saleId = GeneratedColumn<String>(
+    'sale_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'UNIQUE REFERENCES sales (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _queueDateMeta = const VerificationMeta(
+    'queueDate',
+  );
+  @override
+  late final GeneratedColumn<String> queueDate = GeneratedColumn<String>(
+    'queue_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _queueNumberMeta = const VerificationMeta(
+    'queueNumber',
+  );
+  @override
+  late final GeneratedColumn<int> queueNumber = GeneratedColumn<int>(
+    'queue_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _queueCodeMeta = const VerificationMeta(
+    'queueCode',
+  );
+  @override
+  late final GeneratedColumn<String> queueCode = GeneratedColumn<String>(
+    'queue_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('waiting'),
+  );
+  static const VerificationMeta _preparationStatusMeta = const VerificationMeta(
+    'preparationStatus',
+  );
+  @override
+  late final GeneratedColumn<String> preparationStatus =
+      GeneratedColumn<String>(
+        'preparation_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('preparing'),
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    saleId,
+    queueDate,
+    queueNumber,
+    queueCode,
+    status,
+    preparationStatus,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'queue_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<QueueEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('sale_id')) {
+      context.handle(
+        _saleIdMeta,
+        saleId.isAcceptableOrUnknown(data['sale_id']!, _saleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_saleIdMeta);
+    }
+    if (data.containsKey('queue_date')) {
+      context.handle(
+        _queueDateMeta,
+        queueDate.isAcceptableOrUnknown(data['queue_date']!, _queueDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_queueDateMeta);
+    }
+    if (data.containsKey('queue_number')) {
+      context.handle(
+        _queueNumberMeta,
+        queueNumber.isAcceptableOrUnknown(
+          data['queue_number']!,
+          _queueNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_queueNumberMeta);
+    }
+    if (data.containsKey('queue_code')) {
+      context.handle(
+        _queueCodeMeta,
+        queueCode.isAcceptableOrUnknown(data['queue_code']!, _queueCodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_queueCodeMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('preparation_status')) {
+      context.handle(
+        _preparationStatusMeta,
+        preparationStatus.isAcceptableOrUnknown(
+          data['preparation_status']!,
+          _preparationStatusMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {queueDate, queueNumber},
+  ];
+  @override
+  QueueEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return QueueEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      saleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sale_id'],
+      )!,
+      queueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}queue_date'],
+      )!,
+      queueNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}queue_number'],
+      )!,
+      queueCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}queue_code'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      preparationStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preparation_status'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $QueueEntriesTable createAlias(String alias) {
+    return $QueueEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class QueueEntry extends DataClass implements Insertable<QueueEntry> {
+  final String id;
+  final String saleId;
+  final String queueDate;
+  final int queueNumber;
+  final String queueCode;
+  final String status;
+  final String preparationStatus;
+  final int createdAt;
+  final int updatedAt;
+  const QueueEntry({
+    required this.id,
+    required this.saleId,
+    required this.queueDate,
+    required this.queueNumber,
+    required this.queueCode,
+    required this.status,
+    required this.preparationStatus,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['sale_id'] = Variable<String>(saleId);
+    map['queue_date'] = Variable<String>(queueDate);
+    map['queue_number'] = Variable<int>(queueNumber);
+    map['queue_code'] = Variable<String>(queueCode);
+    map['status'] = Variable<String>(status);
+    map['preparation_status'] = Variable<String>(preparationStatus);
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  QueueEntriesCompanion toCompanion(bool nullToAbsent) {
+    return QueueEntriesCompanion(
+      id: Value(id),
+      saleId: Value(saleId),
+      queueDate: Value(queueDate),
+      queueNumber: Value(queueNumber),
+      queueCode: Value(queueCode),
+      status: Value(status),
+      preparationStatus: Value(preparationStatus),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory QueueEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return QueueEntry(
+      id: serializer.fromJson<String>(json['id']),
+      saleId: serializer.fromJson<String>(json['saleId']),
+      queueDate: serializer.fromJson<String>(json['queueDate']),
+      queueNumber: serializer.fromJson<int>(json['queueNumber']),
+      queueCode: serializer.fromJson<String>(json['queueCode']),
+      status: serializer.fromJson<String>(json['status']),
+      preparationStatus: serializer.fromJson<String>(json['preparationStatus']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'saleId': serializer.toJson<String>(saleId),
+      'queueDate': serializer.toJson<String>(queueDate),
+      'queueNumber': serializer.toJson<int>(queueNumber),
+      'queueCode': serializer.toJson<String>(queueCode),
+      'status': serializer.toJson<String>(status),
+      'preparationStatus': serializer.toJson<String>(preparationStatus),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  QueueEntry copyWith({
+    String? id,
+    String? saleId,
+    String? queueDate,
+    int? queueNumber,
+    String? queueCode,
+    String? status,
+    String? preparationStatus,
+    int? createdAt,
+    int? updatedAt,
+  }) => QueueEntry(
+    id: id ?? this.id,
+    saleId: saleId ?? this.saleId,
+    queueDate: queueDate ?? this.queueDate,
+    queueNumber: queueNumber ?? this.queueNumber,
+    queueCode: queueCode ?? this.queueCode,
+    status: status ?? this.status,
+    preparationStatus: preparationStatus ?? this.preparationStatus,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  QueueEntry copyWithCompanion(QueueEntriesCompanion data) {
+    return QueueEntry(
+      id: data.id.present ? data.id.value : this.id,
+      saleId: data.saleId.present ? data.saleId.value : this.saleId,
+      queueDate: data.queueDate.present ? data.queueDate.value : this.queueDate,
+      queueNumber: data.queueNumber.present
+          ? data.queueNumber.value
+          : this.queueNumber,
+      queueCode: data.queueCode.present ? data.queueCode.value : this.queueCode,
+      status: data.status.present ? data.status.value : this.status,
+      preparationStatus: data.preparationStatus.present
+          ? data.preparationStatus.value
+          : this.preparationStatus,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QueueEntry(')
+          ..write('id: $id, ')
+          ..write('saleId: $saleId, ')
+          ..write('queueDate: $queueDate, ')
+          ..write('queueNumber: $queueNumber, ')
+          ..write('queueCode: $queueCode, ')
+          ..write('status: $status, ')
+          ..write('preparationStatus: $preparationStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    saleId,
+    queueDate,
+    queueNumber,
+    queueCode,
+    status,
+    preparationStatus,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is QueueEntry &&
+          other.id == this.id &&
+          other.saleId == this.saleId &&
+          other.queueDate == this.queueDate &&
+          other.queueNumber == this.queueNumber &&
+          other.queueCode == this.queueCode &&
+          other.status == this.status &&
+          other.preparationStatus == this.preparationStatus &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class QueueEntriesCompanion extends UpdateCompanion<QueueEntry> {
+  final Value<String> id;
+  final Value<String> saleId;
+  final Value<String> queueDate;
+  final Value<int> queueNumber;
+  final Value<String> queueCode;
+  final Value<String> status;
+  final Value<String> preparationStatus;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const QueueEntriesCompanion({
+    this.id = const Value.absent(),
+    this.saleId = const Value.absent(),
+    this.queueDate = const Value.absent(),
+    this.queueNumber = const Value.absent(),
+    this.queueCode = const Value.absent(),
+    this.status = const Value.absent(),
+    this.preparationStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  QueueEntriesCompanion.insert({
+    required String id,
+    required String saleId,
+    required String queueDate,
+    required int queueNumber,
+    required String queueCode,
+    this.status = const Value.absent(),
+    this.preparationStatus = const Value.absent(),
+    required int createdAt,
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       saleId = Value(saleId),
+       queueDate = Value(queueDate),
+       queueNumber = Value(queueNumber),
+       queueCode = Value(queueCode),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<QueueEntry> custom({
+    Expression<String>? id,
+    Expression<String>? saleId,
+    Expression<String>? queueDate,
+    Expression<int>? queueNumber,
+    Expression<String>? queueCode,
+    Expression<String>? status,
+    Expression<String>? preparationStatus,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (saleId != null) 'sale_id': saleId,
+      if (queueDate != null) 'queue_date': queueDate,
+      if (queueNumber != null) 'queue_number': queueNumber,
+      if (queueCode != null) 'queue_code': queueCode,
+      if (status != null) 'status': status,
+      if (preparationStatus != null) 'preparation_status': preparationStatus,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  QueueEntriesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? saleId,
+    Value<String>? queueDate,
+    Value<int>? queueNumber,
+    Value<String>? queueCode,
+    Value<String>? status,
+    Value<String>? preparationStatus,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return QueueEntriesCompanion(
+      id: id ?? this.id,
+      saleId: saleId ?? this.saleId,
+      queueDate: queueDate ?? this.queueDate,
+      queueNumber: queueNumber ?? this.queueNumber,
+      queueCode: queueCode ?? this.queueCode,
+      status: status ?? this.status,
+      preparationStatus: preparationStatus ?? this.preparationStatus,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (saleId.present) {
+      map['sale_id'] = Variable<String>(saleId.value);
+    }
+    if (queueDate.present) {
+      map['queue_date'] = Variable<String>(queueDate.value);
+    }
+    if (queueNumber.present) {
+      map['queue_number'] = Variable<int>(queueNumber.value);
+    }
+    if (queueCode.present) {
+      map['queue_code'] = Variable<String>(queueCode.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (preparationStatus.present) {
+      map['preparation_status'] = Variable<String>(preparationStatus.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QueueEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('saleId: $saleId, ')
+          ..write('queueDate: $queueDate, ')
+          ..write('queueNumber: $queueNumber, ')
+          ..write('queueCode: $queueCode, ')
+          ..write('status: $status, ')
+          ..write('preparationStatus: $preparationStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5598,6 +6390,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SyncOutboxTable syncOutbox = $SyncOutboxTable(this);
   late final $SyncStateTable syncState = $SyncStateTable(this);
   late final $SyncConflictsTable syncConflicts = $SyncConflictsTable(this);
+  late final $QueueDailyCountersTable queueDailyCounters =
+      $QueueDailyCountersTable(this);
+  late final $QueueEntriesTable queueEntries = $QueueEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5614,6 +6409,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     syncOutbox,
     syncState,
     syncConflicts,
+    queueDailyCounters,
+    queueEntries,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -5658,6 +6455,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('inventory_movements', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'sales',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('queue_entries', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -7101,6 +7905,24 @@ final class $$SalesTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$QueueEntriesTable, List<QueueEntry>>
+  _queueEntriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.queueEntries,
+    aliasName: 'sales__id__queue_entries__sale_id',
+  );
+
+  $$QueueEntriesTableProcessedTableManager get queueEntriesRefs {
+    final manager = $$QueueEntriesTableTableManager(
+      $_db,
+      $_db.queueEntries,
+    ).filter((f) => f.saleId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_queueEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$SalesTableFilterComposer extends Composer<_$AppDatabase, $SalesTable> {
@@ -7202,6 +8024,31 @@ class $$SalesTableFilterComposer extends Composer<_$AppDatabase, $SalesTable> {
           }) => $$PaymentsTableFilterComposer(
             $db: $db,
             $table: $db.payments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> queueEntriesRefs(
+    Expression<bool> Function($$QueueEntriesTableFilterComposer f) f,
+  ) {
+    final $$QueueEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.queueEntries,
+      getReferencedColumn: (t) => t.saleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$QueueEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.queueEntries,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -7368,6 +8215,31 @@ class $$SalesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> queueEntriesRefs<T extends Object>(
+    Expression<T> Function($$QueueEntriesTableAnnotationComposer a) f,
+  ) {
+    final $$QueueEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.queueEntries,
+      getReferencedColumn: (t) => t.saleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$QueueEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.queueEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$SalesTableTableManager
@@ -7383,7 +8255,11 @@ class $$SalesTableTableManager
           $$SalesTableUpdateCompanionBuilder,
           (Sale, $$SalesTableReferences),
           Sale,
-          PrefetchHooks Function({bool saleItemsRefs, bool paymentsRefs})
+          PrefetchHooks Function({
+            bool saleItemsRefs,
+            bool paymentsRefs,
+            bool queueEntriesRefs,
+          })
         > {
   $$SalesTableTableManager(_$AppDatabase db, $SalesTable table)
     : super(
@@ -7457,12 +8333,17 @@ class $$SalesTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({saleItemsRefs = false, paymentsRefs = false}) {
+              ({
+                saleItemsRefs = false,
+                paymentsRefs = false,
+                queueEntriesRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (saleItemsRefs) db.saleItems,
                     if (paymentsRefs) db.payments,
+                    if (queueEntriesRefs) db.queueEntries,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -7507,6 +8388,26 @@ class $$SalesTableTableManager
                           referencedColumn: 'sale_id',
                           typedResults: items,
                         ),
+                      if (queueEntriesRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Sale,
+                          $SalesTable,
+                          QueueEntry,
+                          $QueueEntriesTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SalesTableReferences
+                              ._queueEntriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SalesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).queueEntriesRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'sale_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -7527,7 +8428,11 @@ typedef $$SalesTableProcessedTableManager =
       $$SalesTableUpdateCompanionBuilder,
       (Sale, $$SalesTableReferences),
       Sale,
-      PrefetchHooks Function({bool saleItemsRefs, bool paymentsRefs})
+      PrefetchHooks Function({
+        bool saleItemsRefs,
+        bool paymentsRefs,
+        bool queueEntriesRefs,
+      })
     >;
 typedef $$SaleItemsTableCreateCompanionBuilder = SaleItemsCompanion Function({
   required String id,
@@ -9756,6 +10661,570 @@ typedef $$SyncConflictsTableProcessedTableManager =
       SyncConflict,
       PrefetchHooks Function()
     >;
+typedef $$QueueDailyCountersTableCreateCompanionBuilder =
+    QueueDailyCountersCompanion Function({
+      required String queueDate,
+      required int lastNumber,
+      Value<int> rowid,
+    });
+typedef $$QueueDailyCountersTableUpdateCompanionBuilder =
+    QueueDailyCountersCompanion Function({
+      Value<String> queueDate,
+      Value<int> lastNumber,
+      Value<int> rowid,
+    });
+
+class $$QueueDailyCountersTableFilterComposer
+    extends Composer<_$AppDatabase, $QueueDailyCountersTable> {
+  $$QueueDailyCountersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get queueDate => $composableBuilder(
+    column: $table.queueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastNumber => $composableBuilder(
+    column: $table.lastNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$QueueDailyCountersTableOrderingComposer
+    extends Composer<_$AppDatabase, $QueueDailyCountersTable> {
+  $$QueueDailyCountersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get queueDate => $composableBuilder(
+    column: $table.queueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastNumber => $composableBuilder(
+    column: $table.lastNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$QueueDailyCountersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $QueueDailyCountersTable> {
+  $$QueueDailyCountersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get queueDate =>
+      $composableBuilder(column: $table.queueDate, builder: (column) => column);
+
+  GeneratedColumn<int> get lastNumber => $composableBuilder(
+    column: $table.lastNumber,
+    builder: (column) => column,
+  );
+}
+
+class $$QueueDailyCountersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $QueueDailyCountersTable,
+          QueueDailyCounter,
+          $$QueueDailyCountersTableFilterComposer,
+          $$QueueDailyCountersTableOrderingComposer,
+          $$QueueDailyCountersTableAnnotationComposer,
+          $$QueueDailyCountersTableCreateCompanionBuilder,
+          $$QueueDailyCountersTableUpdateCompanionBuilder,
+          (
+            QueueDailyCounter,
+            BaseReferences<
+              _$AppDatabase,
+              $QueueDailyCountersTable,
+              QueueDailyCounter
+            >,
+          ),
+          QueueDailyCounter,
+          PrefetchHooks Function()
+        > {
+  $$QueueDailyCountersTableTableManager(
+    _$AppDatabase db,
+    $QueueDailyCountersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$QueueDailyCountersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$QueueDailyCountersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$QueueDailyCountersTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> queueDate = const Value.absent(),
+                Value<int> lastNumber = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => QueueDailyCountersCompanion(
+                queueDate: queueDate,
+                lastNumber: lastNumber,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String queueDate,
+                required int lastNumber,
+                Value<int> rowid = const Value.absent(),
+              }) => QueueDailyCountersCompanion.insert(
+                queueDate: queueDate,
+                lastNumber: lastNumber,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$QueueDailyCountersTable, QueueDailyCounter>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $QueueDailyCountersTable,
+                    QueueDailyCounter
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$QueueDailyCountersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $QueueDailyCountersTable,
+      QueueDailyCounter,
+      $$QueueDailyCountersTableFilterComposer,
+      $$QueueDailyCountersTableOrderingComposer,
+      $$QueueDailyCountersTableAnnotationComposer,
+      $$QueueDailyCountersTableCreateCompanionBuilder,
+      $$QueueDailyCountersTableUpdateCompanionBuilder,
+      (
+        QueueDailyCounter,
+        BaseReferences<
+          _$AppDatabase,
+          $QueueDailyCountersTable,
+          QueueDailyCounter
+        >,
+      ),
+      QueueDailyCounter,
+      PrefetchHooks Function()
+    >;
+typedef $$QueueEntriesTableCreateCompanionBuilder =
+    QueueEntriesCompanion Function({
+      required String id,
+      required String saleId,
+      required String queueDate,
+      required int queueNumber,
+      required String queueCode,
+      Value<String> status,
+      Value<String> preparationStatus,
+      required int createdAt,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$QueueEntriesTableUpdateCompanionBuilder =
+    QueueEntriesCompanion Function({
+      Value<String> id,
+      Value<String> saleId,
+      Value<String> queueDate,
+      Value<int> queueNumber,
+      Value<String> queueCode,
+      Value<String> status,
+      Value<String> preparationStatus,
+      Value<int> createdAt,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$QueueEntriesTableReferences
+    extends BaseReferences<_$AppDatabase, $QueueEntriesTable, QueueEntry> {
+  $$QueueEntriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $SalesTable _saleIdTable(_$AppDatabase db) =>
+      db.sales.createAlias('queue_entries__sale_id__sales__id');
+
+  $$SalesTableProcessedTableManager get saleId {
+    final $_column = $_itemColumn<String>('sale_id')!;
+
+    final manager = $$SalesTableTableManager(
+      $_db,
+      $_db.sales,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_saleIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$QueueEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $QueueEntriesTable> {
+  $$QueueEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get queueDate => $composableBuilder(
+    column: $table.queueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get queueNumber => $composableBuilder(
+    column: $table.queueNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get queueCode => $composableBuilder(
+    column: $table.queueCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preparationStatus => $composableBuilder(
+    column: $table.preparationStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SalesTableFilterComposer get saleId {
+    final $$SalesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.saleId,
+      referencedTable: $db.sales,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SalesTableFilterComposer(
+            $db: $db,
+            $table: $db.sales,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$QueueEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $QueueEntriesTable> {
+  $$QueueEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get queueDate => $composableBuilder(
+    column: $table.queueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get queueNumber => $composableBuilder(
+    column: $table.queueNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get queueCode => $composableBuilder(
+    column: $table.queueCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preparationStatus => $composableBuilder(
+    column: $table.preparationStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SalesTableOrderingComposer get saleId {
+    final $$SalesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.saleId,
+      referencedTable: $db.sales,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SalesTableOrderingComposer(
+            $db: $db,
+            $table: $db.sales,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$QueueEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $QueueEntriesTable> {
+  $$QueueEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get queueDate =>
+      $composableBuilder(column: $table.queueDate, builder: (column) => column);
+
+  GeneratedColumn<int> get queueNumber => $composableBuilder(
+    column: $table.queueNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get queueCode =>
+      $composableBuilder(column: $table.queueCode, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get preparationStatus => $composableBuilder(
+    column: $table.preparationStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$SalesTableAnnotationComposer get saleId {
+    final $$SalesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.saleId,
+      referencedTable: $db.sales,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SalesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sales,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$QueueEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $QueueEntriesTable,
+          QueueEntry,
+          $$QueueEntriesTableFilterComposer,
+          $$QueueEntriesTableOrderingComposer,
+          $$QueueEntriesTableAnnotationComposer,
+          $$QueueEntriesTableCreateCompanionBuilder,
+          $$QueueEntriesTableUpdateCompanionBuilder,
+          (QueueEntry, $$QueueEntriesTableReferences),
+          QueueEntry,
+          PrefetchHooks Function({bool saleId})
+        > {
+  $$QueueEntriesTableTableManager(_$AppDatabase db, $QueueEntriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$QueueEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$QueueEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$QueueEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> saleId = const Value.absent(),
+                Value<String> queueDate = const Value.absent(),
+                Value<int> queueNumber = const Value.absent(),
+                Value<String> queueCode = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> preparationStatus = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => QueueEntriesCompanion(
+                id: id,
+                saleId: saleId,
+                queueDate: queueDate,
+                queueNumber: queueNumber,
+                queueCode: queueCode,
+                status: status,
+                preparationStatus: preparationStatus,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String saleId,
+                required String queueDate,
+                required int queueNumber,
+                required String queueCode,
+                Value<String> status = const Value.absent(),
+                Value<String> preparationStatus = const Value.absent(),
+                required int createdAt,
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => QueueEntriesCompanion.insert(
+                id: id,
+                saleId: saleId,
+                queueDate: queueDate,
+                queueNumber: queueNumber,
+                queueCode: queueCode,
+                status: status,
+                preparationStatus: preparationStatus,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$QueueEntriesTable, QueueEntry>(table),
+                  $$QueueEntriesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({saleId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (saleId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.saleId,
+                        referencedTable: $$QueueEntriesTableReferences
+                            ._saleIdTable(db),
+                        referencedColumn: $$QueueEntriesTableReferences
+                            ._saleIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$QueueEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $QueueEntriesTable,
+      QueueEntry,
+      $$QueueEntriesTableFilterComposer,
+      $$QueueEntriesTableOrderingComposer,
+      $$QueueEntriesTableAnnotationComposer,
+      $$QueueEntriesTableCreateCompanionBuilder,
+      $$QueueEntriesTableUpdateCompanionBuilder,
+      (QueueEntry, $$QueueEntriesTableReferences),
+      QueueEntry,
+      PrefetchHooks Function({bool saleId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9782,4 +11251,8 @@ class $AppDatabaseManager {
       $$SyncStateTableTableManager(_db, _db.syncState);
   $$SyncConflictsTableTableManager get syncConflicts =>
       $$SyncConflictsTableTableManager(_db, _db.syncConflicts);
+  $$QueueDailyCountersTableTableManager get queueDailyCounters =>
+      $$QueueDailyCountersTableTableManager(_db, _db.queueDailyCounters);
+  $$QueueEntriesTableTableManager get queueEntries =>
+      $$QueueEntriesTableTableManager(_db, _db.queueEntries);
 }

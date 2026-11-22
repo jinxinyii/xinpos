@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:xinpos/shared/widgets/app_notification.dart';
+
 import '../../domain/entities/category.dart';
 import '../../domain/entities/product.dart';
 import '../providers/category_providers.dart';
@@ -191,15 +193,19 @@ class _EditProductFormState extends ConsumerState<_EditProductForm> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product updated successfully.')),
+        AppSnackBar(
+          context: context,
+          content: Text('Product updated successfully.'),
+        ),
       );
 
       context.pop(true);
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(context: context, content: Text(error.toString())),
+      );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

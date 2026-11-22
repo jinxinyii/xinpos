@@ -1,4 +1,6 @@
 import 'package:material_ui/material_ui.dart';
+
+import 'package:xinpos/shared/widgets/app_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/category.dart';
@@ -108,15 +110,19 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product saved successfully.')),
+        AppSnackBar(
+          context: context,
+          content: Text('Product saved successfully.'),
+        ),
       );
 
       Navigator.of(context).pop(productId);
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(context: context, content: Text(error.toString())),
+      );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

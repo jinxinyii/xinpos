@@ -3,12 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../../shared/widgets/app_notification.dart';
+
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/providers/barcode_providers.dart';
 import '../../../products/presentation/providers/products_list_provider.dart';
 import '../../../sales/domain/entities/sale_checkout_item.dart';
 import '../../../sales/domain/entities/sale_checkout_result.dart';
 import '../../../sales/presentation/providers/sale_providers.dart';
+import '../../../settings/data/services/bluetooth_printer_service.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -24,6 +27,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   String _search = '';
   bool _isScanning = false;
   bool _isCheckingOut = false;
+  bool _isPrintingReceipt = false;
 
   int get _cartQuantity =>
       _cart.values.fold<int>(0, (total, line) => total + line.quantity);
@@ -53,6 +57,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     });
 
     final colors = Theme.of(context).colorScheme;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isTabletLayout = screenWidth >= 600;
     final quantity = _cart[product.id]?.quantity ?? 1;
     final messenger = ScaffoldMessenger.of(context);
 
@@ -63,7 +69,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           behavior: SnackBarBehavior.floating,
           backgroundColor: colors.inverseSurface,
           elevation: 6,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          width: isTabletLayout ? 360 : null,
+          margin: isTabletLayout
+              ? null
+              : const EdgeInsets.fromLTRB(16, 0, 16, 16),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -164,11 +173,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       if (!mounted) return;
 
       if (product == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No product found for barcode: $barcode'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        AppNotification.show(
+          context,
+          message: 'No product found for barcode: $barcode',
+          type: AppNotificationType.error,
         );
         return;
       }
@@ -177,8 +185,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to look up barcode: $error')),
+      AppNotification.show(
+        context,
+        message: 'Unable to look up barcode: $error',
+        type: AppNotificationType.error,
       );
     } finally {
       if (mounted) {
@@ -258,13 +268,54 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
       setState(() => _isCheckingOut = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Checkout failed: $error'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          duration: const Duration(seconds: 5),
-        ),
+      AppNotification.show(
+        context,
+        message: 'Checkout failed: $error',
+        type: AppNotificationType.error,
       );
+    }
+  }
+
+  Future<void> _printCheckoutReceipt(SaleCheckoutResult result) async {
+    if (_isPrintingReceipt) return;
+    setState(() => _isPrintingReceipt = true);
+
+    try {
+      final sale = await ref
+          .read(saleRepositoryProvider)
+          .getSaleDetails(result.saleId);
+
+      if (!mounted) return;
+
+      if (sale == null) {
+        AppNotification.show(
+          context,
+          message:
+              'Sale was saved, but its receipt details could not be loaded.',
+          type: AppNotificationType.error,
+        );
+        return;
+      }
+
+      final printed = await BluetoothPrinterService().printSaleReceipt(sale);
+      if (!mounted) return;
+
+      AppNotification.show(
+        context,
+        message: printed
+            ? 'Receipt sent to printer'
+            : 'Unable to print receipt',
+        type: printed ? AppNotificationType.success : AppNotificationType.error,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      AppNotification.show(
+        context,
+        message: 'Print failed: $error',
+        type: AppNotificationType.error,
+      );
+    } finally {
+      if (mounted) setState(() => _isPrintingReceipt = false);
     }
   }
 
@@ -284,6 +335,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           children: [
             const Text('Your transaction was saved successfully.'),
             const SizedBox(height: 16),
+            const Text('Queue Number'),
+            const SizedBox(height: 4),
+            Text(
+              result.queueCode,
+              style: Theme.of(dialogContext).textTheme.headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
             const Text('Receipt Number'),
             const SizedBox(height: 4),
             SelectableText(
@@ -304,6 +363,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ],
         ),
         actions: [
+          TextButton.icon(
+            onPressed: _isPrintingReceipt
+                ? null
+                : () {
+                    Navigator.pop(dialogContext);
+                    _printCheckoutReceipt(result);
+                  },
+            icon: const Icon(Icons.print_rounded),
+            label: const Text('Print Receipt'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Done'),

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:xinpos/shared/widgets/app_notification.dart';
+
 import '../providers/category_providers.dart';
 import '../providers/inventory_providers.dart';
 import '../providers/product_details_provider.dart';
@@ -68,15 +70,19 @@ class ProductDetailsScreen extends ConsumerWidget {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product archived successfully.')),
+        AppSnackBar(
+          context: context,
+          content: Text('Product archived successfully.'),
+        ),
       );
 
       context.pop(true);
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(context: context, content: Text(error.toString())),
+      );
     }
   }
 

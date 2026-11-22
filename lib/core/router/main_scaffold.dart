@@ -28,6 +28,21 @@ class MainScaffold extends StatelessWidget {
       label: 'Sales',
     ),
     NavigationDestination(
+      icon: Icon(Icons.confirmation_number_outlined),
+      selectedIcon: Icon(Icons.confirmation_number),
+      label: 'Queue',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.money_off_csred_outlined),
+      selectedIcon: Icon(Icons.money_off_csred),
+      label: 'Expenses',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.analytics_outlined),
+      selectedIcon: Icon(Icons.analytics_rounded),
+      label: 'Profit',
+    ),
+    NavigationDestination(
       icon: Icon(Icons.settings_outlined),
       selectedIcon: Icon(Icons.settings_rounded),
       label: 'Settings',

@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:xinpos/shared/widgets/app_notification.dart';
+
 import '../providers/inventory_management_provider.dart';
 import '../providers/inventory_providers.dart';
 import '../providers/product_details_provider.dart';
@@ -53,13 +55,17 @@ class StockManagementScreen extends ConsumerWidget {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inventory updated successfully.')),
+        AppSnackBar(
+          context: context,
+          content: Text('Inventory updated successfully.'),
+        ),
       );
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(context: context, content: Text(error.toString())),
+      );
     }
   }
 

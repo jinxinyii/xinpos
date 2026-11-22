@@ -12,6 +12,8 @@ import 'tables/expenses_table.dart';
 import 'tables/sync_outbox_table.dart';
 import 'tables/sync_state_table.dart';
 import 'tables/sync_conflicts_table.dart';
+import 'tables/queue_daily_counters_table.dart';
+import 'tables/queue_entries_table.dart';
 
 part 'app_database.g.dart';
 
@@ -28,13 +30,15 @@ part 'app_database.g.dart';
     SyncOutbox,
     SyncState,
     SyncConflicts,
+    QueueDailyCounters,
+    QueueEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'xinpos_db'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -51,6 +55,13 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(syncOutbox);
         await m.createTable(syncState);
         await m.createTable(syncConflicts);
+      }
+      if (from < 3) {
+        await m.createTable(queueDailyCounters);
+        await m.createTable(queueEntries);
+      }
+      if (from < 4) {
+        await m.addColumn(queueEntries, queueEntries.preparationStatus);
       }
     },
     beforeOpen: (details) async {

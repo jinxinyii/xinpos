@@ -347,6 +347,14 @@ class ProductDetailsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
               ],
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await context.push('/products/${product.id}/barcodes');
+                },
+                icon: const Icon(Icons.qr_code_2),
+                label: const Text('Manage Barcodes'),
+              ),
+              const SizedBox(height: 10),
               FilledButton.icon(
                 onPressed: () async {
                   await context.push('/products/${product.id}/edit');

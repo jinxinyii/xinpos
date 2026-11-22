@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../providers/barcode_providers.dart';
@@ -7,27 +8,24 @@ import '../providers/product_details_provider.dart';
 class ProductBarcodesScreen extends ConsumerWidget {
   final String productId;
 
-  const ProductBarcodesScreen({
-    required this.productId,
-    super.key,
-  });
+  const ProductBarcodesScreen({required this.productId, super.key});
 
   Future<void> _addBarcode(
     BuildContext context,
-    WidgetRef ref,
-  ) async {
+    WidgetRef ref, {
+    String? initialBarcode,
+  }) async {
     final result = await showDialog<String>(
       context: context,
-      builder: (_) => const _BarcodeDialog(),
+      builder: (_) => _BarcodeDialog(initialBarcode: initialBarcode),
     );
 
     if (result == null || !context.mounted) return;
 
     try {
-      await ref.read(barcodeManagementServiceProvider).addBarcode(
-            productId: productId,
-            barcode: result,
-          );
+      await ref
+          .read(barcodeManagementServiceProvider)
+          .addBarcode(productId: productId, barcode: result);
 
       ref.invalidate(productBarcodesProvider(productId));
 
@@ -39,10 +37,18 @@ class ProductBarcodesScreen extends ConsumerWidget {
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to add barcode: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to add barcode: $error')));
     }
+  }
+
+  Future<void> _scanBarcode(BuildContext context, WidgetRef ref) async {
+    final barcode = await GoRouter.of(context).push<String>('/scanner');
+
+    if (barcode == null || !context.mounted) return;
+
+    await _addBarcode(context, ref, initialBarcode: barcode);
   }
 
   Future<void> _deleteBarcode(
@@ -72,9 +78,7 @@ class ProductBarcodesScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
 
     try {
-      await ref
-          .read(barcodeManagementServiceProvider)
-          .deleteBarcode(barcodeId);
+      await ref.read(barcodeManagementServiceProvider).deleteBarcode(barcodeId);
 
       ref.invalidate(productBarcodesProvider(productId));
 
@@ -100,6 +104,13 @@ class ProductBarcodesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Barcodes'),
+        actions: [
+          IconButton(
+            tooltip: 'Scan Barcode',
+            icon: const Icon(Icons.qr_code_scanner),
+            onPressed: () => _scanBarcode(context, ref),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addBarcode(context, ref),
@@ -108,9 +119,8 @@ class ProductBarcodesScreen extends ConsumerWidget {
       ),
       body: productState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Text('Unable to load product: $error'),
-        ),
+        error: (error, stackTrace) =>
+            Center(child: Text('Unable to load product: $error')),
         data: (product) {
           if (product == null || !product.isActive) {
             return const Center(child: Text('Product not found.'));
@@ -140,9 +150,8 @@ class ProductBarcodesScreen extends ConsumerWidget {
               ),
               Expanded(
                 child: barcodesState.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, stackTrace) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
@@ -176,16 +185,12 @@ class ProductBarcodesScreen extends ConsumerWidget {
                               Icon(
                                 Icons.qr_code_2,
                                 size: 64,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .outline,
+                                color: Theme.of(context).colorScheme.outline,
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 'No barcodes yet',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge,
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 8),
                               const Text(
@@ -202,8 +207,7 @@ class ProductBarcodesScreen extends ConsumerWidget {
                     return ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                       itemCount: barcodes.length,
-                      separatorBuilder: (_, index) =>
-                          const SizedBox(height: 8),
+                      separatorBuilder: (_, index) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final barcode = barcodes[index];
 
@@ -250,7 +254,9 @@ class ProductBarcodesScreen extends ConsumerWidget {
 }
 
 class _BarcodeDialog extends StatefulWidget {
-  const _BarcodeDialog();
+  final String? initialBarcode;
+
+  const _BarcodeDialog({this.initialBarcode});
 
   @override
   State<_BarcodeDialog> createState() => _BarcodeDialogState();
@@ -258,7 +264,15 @@ class _BarcodeDialog extends StatefulWidget {
 
 class _BarcodeDialogState extends State<_BarcodeDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _barcodeController = TextEditingController();
+  late final TextEditingController _barcodeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _barcodeController = TextEditingController(
+      text: widget.initialBarcode ?? '',
+    );
+  }
 
   @override
   void dispose() {
@@ -308,10 +322,7 @@ class _BarcodeDialogState extends State<_BarcodeDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Save Barcode'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('Save Barcode')),
       ],
     );
   }

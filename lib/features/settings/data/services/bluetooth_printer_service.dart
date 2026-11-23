@@ -7,6 +7,8 @@ import '../../../sales/domain/entities/sale_detail.dart';
 
 class BluetoothPrinterService {
   static const _printerAddressKey = 'xinpos_receipt_printer_mac';
+  static const _receiptTitleKey = 'xinpos_receipt_title';
+  static const defaultReceiptTitle = 'My Business';
 
   Future<bool> get hasPermission =>
       PrintBluetoothThermal.isPermissionBluetoothGranted;
@@ -17,6 +19,21 @@ class BluetoothPrinterService {
 
   Future<List<BluetoothInfo?>> getPairedDevices() async {
     return PrintBluetoothThermal.pairedBluetooths;
+  }
+
+  Future<String> getReceiptTitle() async {
+    final value = await SharedPreferencesAsync().getString(_receiptTitleKey);
+    return value == null || value.trim().isEmpty
+        ? defaultReceiptTitle
+        : value.trim();
+  }
+
+  Future<void> saveReceiptTitle(String title) async {
+    final normalized = title.trim();
+    if (normalized.isEmpty) {
+      throw ArgumentError('Business name cannot be empty.');
+    }
+    await SharedPreferencesAsync().setString(_receiptTitleKey, normalized);
   }
 
   Future<String?> getSavedPrinterAddress() async {
@@ -110,13 +127,17 @@ class BluetoothPrinterService {
     final bytes = <int>[
       ...generator.reset(),
       ...generator.text(
-        'xinPOS',
+        _printerText(await getReceiptTitle()),
         styles: const PosStyles(
           align: PosAlign.center,
           bold: true,
           height: PosTextSize.size2,
           width: PosTextSize.size2,
         ),
+      ),
+      ...generator.text(
+        'Powered by xinPOS',
+        styles: const PosStyles(align: PosAlign.center),
       ),
       ...generator.text(
         'PRINTER TEST',
@@ -158,13 +179,19 @@ class BluetoothPrinterService {
     bytes.addAll(generator.reset());
     bytes.addAll(
       generator.text(
-        'xinPOS',
+        _printerText(await getReceiptTitle()),
         styles: const PosStyles(
           align: PosAlign.center,
           bold: true,
           height: PosTextSize.size2,
           width: PosTextSize.size2,
         ),
+      ),
+    );
+    bytes.addAll(
+      generator.text(
+        'Powered by xinPOS',
+        styles: const PosStyles(align: PosAlign.center),
       ),
     );
     bytes.addAll(
@@ -274,6 +301,13 @@ class BluetoothPrinterService {
       bytes.addAll(
         generator.text('Amount paid: ${money(sale.payment!.amountCentavos)}'),
       );
+      if (sale.payment!.method.toLowerCase() == 'cash' &&
+          sale.payment!.amountTenderedCentavos != null) {
+        final cashReceived = sale.payment!.amountTenderedCentavos!;
+        final change = cashReceived - sale.payment!.amountCentavos;
+        bytes.addAll(generator.text('Cash received: ${money(cashReceived)}'));
+        bytes.addAll(generator.text('Change: ${money(change)}'));
+      }
       final reference = sale.payment!.referenceNumber;
       if (reference != null && reference.isNotEmpty) {
         bytes.addAll(generator.text('Reference: ${_printerText(reference)}'));
@@ -290,6 +324,12 @@ class BluetoothPrinterService {
       generator.text(
         'Please come again.',
         styles: const PosStyles(align: PosAlign.center),
+      ),
+    );
+    bytes.addAll(
+      generator.text(
+        'Powered by xinPOS',
+        styles: const PosStyles(align: PosAlign.center, bold: true),
       ),
     );
     bytes.addAll(generator.feed(4));

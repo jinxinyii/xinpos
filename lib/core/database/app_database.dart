@@ -38,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'xinpos_db'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -62,6 +62,36 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.addColumn(queueEntries, queueEntries.preparationStatus);
+      }
+      if (from < 5) {
+        await m.addColumn(payments, payments.amountTenderedCentavos);
+      }
+      if (from < 6) {
+        await customStatement(
+          'CREATE TABLE queue_entries_new ('
+          'id TEXT NOT NULL PRIMARY KEY, '
+          'sale_id TEXT NOT NULL UNIQUE REFERENCES sales(id) ON DELETE CASCADE, '
+          'queue_date TEXT NOT NULL, '
+          'queue_number INTEGER NOT NULL, '
+          'queue_code TEXT NOT NULL, '
+          'status TEXT NOT NULL DEFAULT \'waiting\', '
+          'preparation_status TEXT NOT NULL DEFAULT \'preparing\', '
+          'created_at INTEGER NOT NULL, '
+          'updated_at INTEGER NOT NULL, '
+          'UNIQUE(queue_date, queue_number)'
+          ')',
+        );
+        await customStatement(
+          'INSERT INTO queue_entries_new '
+          '(id, sale_id, queue_date, queue_number, queue_code, status, '
+          'preparation_status, created_at, updated_at) '
+          'SELECT id, sale_id, queue_date, queue_number, queue_code, status, '
+          'preparation_status, created_at, updated_at FROM queue_entries',
+        );
+        await customStatement('DROP TABLE queue_entries');
+        await customStatement(
+          'ALTER TABLE queue_entries_new RENAME TO queue_entries',
+        );
       }
     },
     beforeOpen: (details) async {

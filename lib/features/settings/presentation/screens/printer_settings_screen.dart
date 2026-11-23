@@ -14,6 +14,8 @@ class PrinterSettingsScreen extends StatefulWidget {
 
 class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
   final BluetoothPrinterService _printerService = BluetoothPrinterService();
+  final TextEditingController _receiptTitleController = TextEditingController();
+  bool _savingReceiptTitle = false;
 
   List<BluetoothInfo> _devices = [];
   String? _connectedAddress;
@@ -26,6 +28,51 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
   void initState() {
     super.initState();
     _loadDevices();
+    _loadReceiptTitle();
+  }
+
+  Future<void> _loadReceiptTitle() async {
+    final title = await _printerService.getReceiptTitle();
+    if (!mounted) return;
+    _receiptTitleController.text = title;
+  }
+
+  Future<void> _saveReceiptTitle() async {
+    final title = _receiptTitleController.text.trim();
+    if (title.isEmpty) {
+      AppNotification.show(
+        context,
+        message: 'Enter a business name for the receipt',
+        type: AppNotificationType.error,
+      );
+      return;
+    }
+
+    setState(() => _savingReceiptTitle = true);
+    try {
+      await _printerService.saveReceiptTitle(title);
+      if (!mounted) return;
+      AppNotification.show(
+        context,
+        message: 'Receipt title saved',
+        type: AppNotificationType.success,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      AppNotification.show(
+        context,
+        message: 'Unable to save receipt title: $error',
+        type: AppNotificationType.error,
+      );
+    } finally {
+      if (mounted) setState(() => _savingReceiptTitle = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _receiptTitleController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDevices() async {
@@ -262,6 +309,62 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Receipt Customization',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Set the business name displayed at the top of printed receipts.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _receiptTitleController,
+                        maxLength: 32,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: const InputDecoration(
+                          labelText: 'Business name',
+                          hintText: 'e.g. ETP STORE',
+                          border: OutlineInputBorder(),
+                          counterText: '',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Powered by xinPOS will remain on every receipt.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _savingReceiptTitle
+                              ? null
+                              : _saveReceiptTitle,
+                          icon: _savingReceiptTitle
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.save_outlined),
+                          label: const Text('Save Receipt Title'),
+                        ),
+                      ),
                     ],
                   ),
                 ),

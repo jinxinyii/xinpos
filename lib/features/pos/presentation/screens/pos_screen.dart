@@ -441,7 +441,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           return Column(
             children: [
               Expanded(child: _buildProductsSection(context, products)),
-              if (_cart.isNotEmpty) _buildCartPanel(context),
+              if (_cart.isNotEmpty) _buildMobileCartBar(context),
             ],
           );
         },
@@ -458,7 +458,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
           child: TextField(
             controller: _searchController,
             onChanged: (value) => setState(() => _search = value.trim()),
@@ -481,7 +481,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
           child: Row(
             children: [
               Expanded(
@@ -570,7 +570,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   }
 
                   return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     itemCount: items.length,
                     separatorBuilder: (_, index) => const SizedBox(height: 8),
                     itemBuilder: (context, index) =>
@@ -596,15 +596,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       color: colors.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.outlineVariant),
+        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.8)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: colors.secondaryContainer,
                 borderRadius: BorderRadius.circular(12),
@@ -614,47 +614,47 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     ? Icons.inventory_2_outlined
                     : Icons.shopping_bag_outlined,
                 color: colors.onSecondaryContainer,
+                size: 21,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     product.name,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (product.sku != null && product.sku!.isNotEmpty) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      'SKU: ${product.sku}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 3),
                   Text(
                     _formatPrice(product.sellingPriceCentavos),
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    style: theme.textTheme.titleSmall?.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (cartLine != null)
+                  if (cartLine != null) ...[
+                    const SizedBox(height: 1),
                     Text(
                       '${cartLine.quantity} in cart',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: theme.textTheme.labelSmall?.copyWith(
                         color: colors.primary,
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ] else if (product.sku != null && product.sku!.isNotEmpty)
+                    Text(
+                      'SKU: ${product.sku}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                 ],
@@ -663,16 +663,272 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             const SizedBox(width: 8),
             FilledButton.tonalIcon(
               onPressed: _isCheckingOut ? null : () => _addProduct(product),
-              icon: const Icon(Icons.add_shopping_cart, size: 18),
+              icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('Add'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                minimumSize: const Size(0, 44),
+                minimumSize: const Size(0, 42),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMobileCartBar(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Material(
+      color: colors.surface,
+      elevation: 8,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: InkWell(
+            onTap: _showMobileCart,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.primaryContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    color: colors.onPrimaryContainer,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$_cartQuantity item${_cartQuantity == 1 ? '' : 's'} in cart',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(color: colors.onPrimaryContainer),
+                        ),
+                        Text(
+                          _formatPrice(_cartTotal),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: colors.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    'View cart',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: colors.onPrimaryContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.keyboard_arrow_up_rounded,
+                    color: colors.onPrimaryContainer,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showMobileCart() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, refreshSheet) {
+            final theme = Theme.of(sheetContext);
+            final colors = theme.colorScheme;
+
+            return FractionallySizedBox(
+              heightFactor: 0.82,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  4,
+                  20,
+                  16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Current Cart',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '$_cartQuantity item${_cartQuantity == 1 ? '' : 's'}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: _isCheckingOut
+                              ? null
+                              : () {
+                                  _clearCart();
+                                  refreshSheet(() {});
+                                },
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Clear'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: _cart.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Your cart is empty',
+                                style: theme.textTheme.bodyLarge,
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: _cart.length,
+                              separatorBuilder: (_, index) =>
+                                  const Divider(height: 18),
+                              itemBuilder: (context, index) {
+                                final line = _cart.values.elementAt(index);
+                                return Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            line.product.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.bodyLarge
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                          Text(
+                                            _formatPrice(
+                                              line
+                                                      .product
+                                                      .sellingPriceCentavos *
+                                                  line.quantity,
+                                            ),
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                                  color:
+                                                      colors.onSurfaceVariant,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: _isCheckingOut
+                                          ? null
+                                          : () {
+                                              _decreaseQuantity(
+                                                line.product.id,
+                                              );
+                                              refreshSheet(() {});
+                                            },
+                                      icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 24,
+                                      child: Text(
+                                        '${line.quantity}',
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: _isCheckingOut
+                                          ? null
+                                          : () {
+                                              _increaseQuantity(
+                                                line.product.id,
+                                              );
+                                              refreshSheet(() {});
+                                            },
+                                      icon: const Icon(
+                                        Icons.add_circle_outline,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                    ),
+                    const Divider(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Total',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ),
+                        Text(
+                          _formatPrice(_cartTotal),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _cart.isEmpty || _isCheckingOut
+                            ? null
+                            : () {
+                                Navigator.pop(sheetContext);
+                                _checkout();
+                              },
+                        icon: const Icon(Icons.point_of_sale_rounded),
+                        label: const Text('Proceed to Checkout'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

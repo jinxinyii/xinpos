@@ -45,12 +45,14 @@ class SaleDetailItem {
 class SalePaymentDetail {
   final String method;
   final int amountCentavos;
+  final int? amountTenderedCentavos;
   final String? referenceNumber;
   final DateTime paidAt;
 
   const SalePaymentDetail({
     required this.method,
     required this.amountCentavos,
+    required this.amountTenderedCentavos,
     required this.referenceNumber,
     required this.paidAt,
   });

@@ -12,7 +12,7 @@ class QueueEntries extends Table {
 
   IntColumn get queueNumber => integer()();
 
-  TextColumn get queueCode => text().unique()();
+  TextColumn get queueCode => text()();
 
   TextColumn get status => text().withDefault(const Constant('waiting'))();
 

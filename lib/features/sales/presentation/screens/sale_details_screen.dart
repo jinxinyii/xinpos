@@ -295,6 +295,22 @@ class _SaleDetailsScreenState extends ConsumerState<SaleDetailsScreen> {
                             label: 'Amount Paid',
                             value: _formatPrice(sale.payment!.amountCentavos),
                           ),
+                          if (sale.payment!.method.toLowerCase() == 'cash' &&
+                              sale.payment!.amountTenderedCentavos != null) ...[
+                            _AmountRow(
+                              label: 'Cash Received',
+                              value: _formatPrice(
+                                sale.payment!.amountTenderedCentavos!,
+                              ),
+                            ),
+                            _AmountRow(
+                              label: 'Change',
+                              value: _formatPrice(
+                                sale.payment!.amountTenderedCentavos! -
+                                    sale.payment!.amountCentavos,
+                              ),
+                            ),
+                          ],
                           if (sale.payment!.referenceNumber != null &&
                               sale.payment!.referenceNumber!.isNotEmpty)
                             _AmountRow(

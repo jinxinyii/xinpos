@@ -2722,6 +2722,16 @@ class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _amountTenderedCentavosMeta =
+      const VerificationMeta('amountTenderedCentavos');
+  @override
+  late final GeneratedColumn<int> amountTenderedCentavos = GeneratedColumn<int>(
+    'amount_tendered_centavos',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _referenceNumberMeta = const VerificationMeta(
     'referenceNumber',
   );
@@ -2748,6 +2758,7 @@ class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
     saleId,
     method,
     amountCentavos,
+    amountTenderedCentavos,
     referenceNumber,
     paidAt,
   ];
@@ -2795,6 +2806,15 @@ class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
     } else if (isInserting) {
       context.missing(_amountCentavosMeta);
     }
+    if (data.containsKey('amount_tendered_centavos')) {
+      context.handle(
+        _amountTenderedCentavosMeta,
+        amountTenderedCentavos.isAcceptableOrUnknown(
+          data['amount_tendered_centavos']!,
+          _amountTenderedCentavosMeta,
+        ),
+      );
+    }
     if (data.containsKey('reference_number')) {
       context.handle(
         _referenceNumberMeta,
@@ -2837,6 +2857,10 @@ class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
         DriftSqlType.int,
         data['${effectivePrefix}amount_centavos'],
       )!,
+      amountTenderedCentavos: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_tendered_centavos'],
+      ),
       referenceNumber: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}reference_number'],
@@ -2859,6 +2883,7 @@ class Payment extends DataClass implements Insertable<Payment> {
   final String saleId;
   final String method;
   final int amountCentavos;
+  final int? amountTenderedCentavos;
   final String? referenceNumber;
   final int paidAt;
   const Payment({
@@ -2866,6 +2891,7 @@ class Payment extends DataClass implements Insertable<Payment> {
     required this.saleId,
     required this.method,
     required this.amountCentavos,
+    this.amountTenderedCentavos,
     this.referenceNumber,
     required this.paidAt,
   });
@@ -2876,6 +2902,9 @@ class Payment extends DataClass implements Insertable<Payment> {
     map['sale_id'] = Variable<String>(saleId);
     map['method'] = Variable<String>(method);
     map['amount_centavos'] = Variable<int>(amountCentavos);
+    if (!nullToAbsent || amountTenderedCentavos != null) {
+      map['amount_tendered_centavos'] = Variable<int>(amountTenderedCentavos);
+    }
     if (!nullToAbsent || referenceNumber != null) {
       map['reference_number'] = Variable<String>(referenceNumber);
     }
@@ -2889,6 +2918,9 @@ class Payment extends DataClass implements Insertable<Payment> {
       saleId: Value(saleId),
       method: Value(method),
       amountCentavos: Value(amountCentavos),
+      amountTenderedCentavos: amountTenderedCentavos == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountTenderedCentavos),
       referenceNumber: referenceNumber == null && nullToAbsent
           ? const Value.absent()
           : Value(referenceNumber),
@@ -2906,6 +2938,9 @@ class Payment extends DataClass implements Insertable<Payment> {
       saleId: serializer.fromJson<String>(json['saleId']),
       method: serializer.fromJson<String>(json['method']),
       amountCentavos: serializer.fromJson<int>(json['amountCentavos']),
+      amountTenderedCentavos: serializer.fromJson<int?>(
+        json['amountTenderedCentavos'],
+      ),
       referenceNumber: serializer.fromJson<String?>(json['referenceNumber']),
       paidAt: serializer.fromJson<int>(json['paidAt']),
     );
@@ -2918,6 +2953,7 @@ class Payment extends DataClass implements Insertable<Payment> {
       'saleId': serializer.toJson<String>(saleId),
       'method': serializer.toJson<String>(method),
       'amountCentavos': serializer.toJson<int>(amountCentavos),
+      'amountTenderedCentavos': serializer.toJson<int?>(amountTenderedCentavos),
       'referenceNumber': serializer.toJson<String?>(referenceNumber),
       'paidAt': serializer.toJson<int>(paidAt),
     };
@@ -2928,6 +2964,7 @@ class Payment extends DataClass implements Insertable<Payment> {
     String? saleId,
     String? method,
     int? amountCentavos,
+    Value<int?> amountTenderedCentavos = const Value.absent(),
     Value<String?> referenceNumber = const Value.absent(),
     int? paidAt,
   }) => Payment(
@@ -2935,6 +2972,9 @@ class Payment extends DataClass implements Insertable<Payment> {
     saleId: saleId ?? this.saleId,
     method: method ?? this.method,
     amountCentavos: amountCentavos ?? this.amountCentavos,
+    amountTenderedCentavos: amountTenderedCentavos.present
+        ? amountTenderedCentavos.value
+        : this.amountTenderedCentavos,
     referenceNumber: referenceNumber.present
         ? referenceNumber.value
         : this.referenceNumber,
@@ -2948,6 +2988,9 @@ class Payment extends DataClass implements Insertable<Payment> {
       amountCentavos: data.amountCentavos.present
           ? data.amountCentavos.value
           : this.amountCentavos,
+      amountTenderedCentavos: data.amountTenderedCentavos.present
+          ? data.amountTenderedCentavos.value
+          : this.amountTenderedCentavos,
       referenceNumber: data.referenceNumber.present
           ? data.referenceNumber.value
           : this.referenceNumber,
@@ -2962,6 +3005,7 @@ class Payment extends DataClass implements Insertable<Payment> {
           ..write('saleId: $saleId, ')
           ..write('method: $method, ')
           ..write('amountCentavos: $amountCentavos, ')
+          ..write('amountTenderedCentavos: $amountTenderedCentavos, ')
           ..write('referenceNumber: $referenceNumber, ')
           ..write('paidAt: $paidAt')
           ..write(')'))
@@ -2969,8 +3013,15 @@ class Payment extends DataClass implements Insertable<Payment> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, saleId, method, amountCentavos, referenceNumber, paidAt);
+  int get hashCode => Object.hash(
+    id,
+    saleId,
+    method,
+    amountCentavos,
+    amountTenderedCentavos,
+    referenceNumber,
+    paidAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2979,6 +3030,7 @@ class Payment extends DataClass implements Insertable<Payment> {
           other.saleId == this.saleId &&
           other.method == this.method &&
           other.amountCentavos == this.amountCentavos &&
+          other.amountTenderedCentavos == this.amountTenderedCentavos &&
           other.referenceNumber == this.referenceNumber &&
           other.paidAt == this.paidAt);
 }
@@ -2988,6 +3040,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
   final Value<String> saleId;
   final Value<String> method;
   final Value<int> amountCentavos;
+  final Value<int?> amountTenderedCentavos;
   final Value<String?> referenceNumber;
   final Value<int> paidAt;
   final Value<int> rowid;
@@ -2996,6 +3049,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     this.saleId = const Value.absent(),
     this.method = const Value.absent(),
     this.amountCentavos = const Value.absent(),
+    this.amountTenderedCentavos = const Value.absent(),
     this.referenceNumber = const Value.absent(),
     this.paidAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3005,6 +3059,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     required String saleId,
     required String method,
     required int amountCentavos,
+    this.amountTenderedCentavos = const Value.absent(),
     this.referenceNumber = const Value.absent(),
     required int paidAt,
     this.rowid = const Value.absent(),
@@ -3018,6 +3073,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     Expression<String>? saleId,
     Expression<String>? method,
     Expression<int>? amountCentavos,
+    Expression<int>? amountTenderedCentavos,
     Expression<String>? referenceNumber,
     Expression<int>? paidAt,
     Expression<int>? rowid,
@@ -3027,6 +3083,8 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
       if (saleId != null) 'sale_id': saleId,
       if (method != null) 'method': method,
       if (amountCentavos != null) 'amount_centavos': amountCentavos,
+      if (amountTenderedCentavos != null)
+        'amount_tendered_centavos': amountTenderedCentavos,
       if (referenceNumber != null) 'reference_number': referenceNumber,
       if (paidAt != null) 'paid_at': paidAt,
       if (rowid != null) 'rowid': rowid,
@@ -3038,6 +3096,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     Value<String>? saleId,
     Value<String>? method,
     Value<int>? amountCentavos,
+    Value<int?>? amountTenderedCentavos,
     Value<String?>? referenceNumber,
     Value<int>? paidAt,
     Value<int>? rowid,
@@ -3047,6 +3106,8 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
       saleId: saleId ?? this.saleId,
       method: method ?? this.method,
       amountCentavos: amountCentavos ?? this.amountCentavos,
+      amountTenderedCentavos:
+          amountTenderedCentavos ?? this.amountTenderedCentavos,
       referenceNumber: referenceNumber ?? this.referenceNumber,
       paidAt: paidAt ?? this.paidAt,
       rowid: rowid ?? this.rowid,
@@ -3068,6 +3129,11 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     if (amountCentavos.present) {
       map['amount_centavos'] = Variable<int>(amountCentavos.value);
     }
+    if (amountTenderedCentavos.present) {
+      map['amount_tendered_centavos'] = Variable<int>(
+        amountTenderedCentavos.value,
+      );
+    }
     if (referenceNumber.present) {
       map['reference_number'] = Variable<String>(referenceNumber.value);
     }
@@ -3087,6 +3153,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
           ..write('saleId: $saleId, ')
           ..write('method: $method, ')
           ..write('amountCentavos: $amountCentavos, ')
+          ..write('amountTenderedCentavos: $amountTenderedCentavos, ')
           ..write('referenceNumber: $referenceNumber, ')
           ..write('paidAt: $paidAt, ')
           ..write('rowid: $rowid')
@@ -5861,7 +5928,6 @@ class $QueueEntriesTable extends QueueEntries
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
@@ -8920,6 +8986,7 @@ typedef $$PaymentsTableCreateCompanionBuilder = PaymentsCompanion Function({
   required String saleId,
   required String method,
   required int amountCentavos,
+  Value<int?> amountTenderedCentavos,
   Value<String?> referenceNumber,
   required int paidAt,
   Value<int> rowid,
@@ -8929,6 +8996,7 @@ typedef $$PaymentsTableUpdateCompanionBuilder = PaymentsCompanion Function({
   Value<String> saleId,
   Value<String> method,
   Value<int> amountCentavos,
+  Value<int?> amountTenderedCentavos,
   Value<String?> referenceNumber,
   Value<int> paidAt,
   Value<int> rowid,
@@ -8977,6 +9045,11 @@ class $$PaymentsTableFilterComposer
 
   ColumnFilters<int> get amountCentavos => $composableBuilder(
     column: $table.amountCentavos,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amountTenderedCentavos => $composableBuilder(
+    column: $table.amountTenderedCentavos,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9038,6 +9111,11 @@ class $$PaymentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get amountTenderedCentavos => $composableBuilder(
+    column: $table.amountTenderedCentavos,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get referenceNumber => $composableBuilder(
     column: $table.referenceNumber,
     builder: (column) => ColumnOrderings(column),
@@ -9089,6 +9167,11 @@ class $$PaymentsTableAnnotationComposer
 
   GeneratedColumn<int> get amountCentavos => $composableBuilder(
     column: $table.amountCentavos,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get amountTenderedCentavos => $composableBuilder(
+    column: $table.amountTenderedCentavos,
     builder: (column) => column,
   );
 
@@ -9156,6 +9239,7 @@ class $$PaymentsTableTableManager
                 Value<String> saleId = const Value.absent(),
                 Value<String> method = const Value.absent(),
                 Value<int> amountCentavos = const Value.absent(),
+                Value<int?> amountTenderedCentavos = const Value.absent(),
                 Value<String?> referenceNumber = const Value.absent(),
                 Value<int> paidAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -9164,6 +9248,7 @@ class $$PaymentsTableTableManager
                 saleId: saleId,
                 method: method,
                 amountCentavos: amountCentavos,
+                amountTenderedCentavos: amountTenderedCentavos,
                 referenceNumber: referenceNumber,
                 paidAt: paidAt,
                 rowid: rowid,
@@ -9174,6 +9259,7 @@ class $$PaymentsTableTableManager
                 required String saleId,
                 required String method,
                 required int amountCentavos,
+                Value<int?> amountTenderedCentavos = const Value.absent(),
                 Value<String?> referenceNumber = const Value.absent(),
                 required int paidAt,
                 Value<int> rowid = const Value.absent(),
@@ -9182,6 +9268,7 @@ class $$PaymentsTableTableManager
                 saleId: saleId,
                 method: method,
                 amountCentavos: amountCentavos,
+                amountTenderedCentavos: amountTenderedCentavos,
                 referenceNumber: referenceNumber,
                 paidAt: paidAt,
                 rowid: rowid,

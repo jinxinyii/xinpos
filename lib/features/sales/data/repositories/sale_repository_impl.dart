@@ -131,9 +131,13 @@ class SaleRepositoryImpl implements SaleRepository {
           .format(DateTime.fromMillisecondsSinceEpoch(now));
       await database.customStatement(
         'INSERT INTO queue_daily_counters (queue_date, last_number) '
-        'VALUES (?, 1) '
-        'ON CONFLICT(queue_date) DO UPDATE SET last_number = last_number + 1',
-        [queueDate],
+        'VALUES (?, (SELECT COALESCE(MAX(queue_number), 0) + 1 '
+        'FROM queue_entries WHERE queue_date = ?)) '
+        'ON CONFLICT(queue_date) DO UPDATE SET last_number = '
+        'MAX(queue_daily_counters.last_number, '
+        '(SELECT COALESCE(MAX(queue_number), 0) FROM queue_entries '
+        'WHERE queue_date = ?)) + 1',
+        [queueDate, queueDate, queueDate],
       );
 
       final counterRows = await database
@@ -212,6 +216,7 @@ class SaleRepositoryImpl implements SaleRepository {
               saleId: saleId,
               method: method,
               amountCentavos: totalCentavos,
+              amountTenderedCentavos: Value(amountTenderedCentavos),
               referenceNumber: Value(
                 referenceNumber?.trim().isEmpty ?? true
                     ? null
@@ -329,7 +334,8 @@ class SaleRepositoryImpl implements SaleRepository {
     final paymentRows = await database
         .customSelect(
           '''
-      SELECT method, amount_centavos, reference_number, paid_at
+      SELECT method, amount_centavos, amount_tendered_centavos,
+             reference_number, paid_at
       FROM payments
       WHERE sale_id = ?
       ORDER BY paid_at DESC
@@ -358,6 +364,9 @@ class SaleRepositoryImpl implements SaleRepository {
       payment = SalePaymentDetail(
         method: row.read<String>('method'),
         amountCentavos: row.read<int>('amount_centavos'),
+        amountTenderedCentavos: row.readNullable<int>(
+          'amount_tendered_centavos',
+        ),
         referenceNumber: row.readNullable<String>('reference_number'),
         paidAt: DateTime.fromMillisecondsSinceEpoch(row.read<int>('paid_at')),
       );

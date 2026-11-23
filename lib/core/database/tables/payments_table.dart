@@ -12,6 +12,8 @@ class Payments extends Table {
 
   IntColumn get amountCentavos => integer()();
 
+  IntColumn get amountTenderedCentavos => integer().nullable()();
+
   TextColumn get referenceNumber => text().nullable()();
 
   IntColumn get paidAt => integer()();

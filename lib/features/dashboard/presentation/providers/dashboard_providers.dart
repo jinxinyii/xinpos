@@ -8,6 +8,14 @@ final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
   return DashboardRepository(ref.watch(databaseProvider));
 });
 
-final dashboardDataProvider = FutureProvider<DashboardData>((ref) {
-  return ref.watch(dashboardRepositoryProvider).getTodayOverview();
+final dashboardDataProvider = StreamProvider<DashboardData>((ref) {
+  final database = ref.watch(databaseProvider);
+  final repository = ref.watch(dashboardRepositoryProvider);
+  return database
+      .customSelect(
+        'SELECT 1 FROM sales UNION ALL SELECT 1 FROM payments',
+        readsFrom: {database.sales, database.payments},
+      )
+      .watch()
+      .asyncMap((_) => repository.getTodayOverview());
 });

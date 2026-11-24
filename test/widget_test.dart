@@ -20,24 +20,28 @@ void main() {
       ProviderScope(
         overrides: [
           dashboardDataProvider.overrideWith(
-            (ref) async => const DashboardData(
-              totalSalesCentavos: 150000,
-              transactionCount: 3,
-              cashSalesCentavos: 100000,
-              gcashSalesCentavos: 50000,
-              recentSales: [],
+            (ref) => Stream.value(
+              const DashboardData(
+                totalSalesCentavos: 150000,
+                transactionCount: 3,
+                cashSalesCentavos: 100000,
+                gcashSalesCentavos: 50000,
+                recentSales: [],
+              ),
             ),
           ),
           salesReportProvider.overrideWith(
-            (ref, filter) async => const SalesReport(
-              totalRevenueCentavos: 250000,
-              transactionCount: 5,
-              totalItemsSold: 8,
-              averageTransactionCentavos: 50000,
-              dailySales: [],
-              topProducts: [],
-              paymentMethods: [],
-              categorySales: [],
+            (ref, filter) => Stream.value(
+              const SalesReport(
+                totalRevenueCentavos: 250000,
+                transactionCount: 5,
+                totalItemsSold: 8,
+                averageTransactionCentavos: 50000,
+                dailySales: [],
+                topProducts: [],
+                paymentMethods: [],
+                categorySales: [],
+              ),
             ),
           ),
         ],

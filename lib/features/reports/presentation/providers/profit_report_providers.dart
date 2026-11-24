@@ -10,6 +10,15 @@ final profitReportRepositoryProvider = Provider<ProfitReportRepository>((ref) {
 });
 
 final profitReportProvider =
-    FutureProvider.family<ProfitReport, SalesReportFilter>((ref, filter) {
-      return ref.watch(profitReportRepositoryProvider).getReport(filter);
+    StreamProvider.family<ProfitReport, SalesReportFilter>((ref, filter) {
+      final database = ref.watch(databaseProvider);
+      final repository = ref.watch(profitReportRepositoryProvider);
+      return database
+          .customSelect(
+            'SELECT 1 FROM sales UNION ALL SELECT 1 FROM sale_items '
+            'UNION ALL SELECT 1 FROM expenses',
+            readsFrom: {database.sales, database.saleItems, database.expenses},
+          )
+          .watch()
+          .asyncMap((_) => repository.getReport(filter));
     });

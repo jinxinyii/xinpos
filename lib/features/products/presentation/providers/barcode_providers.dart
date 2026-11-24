@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../shared/providers/database_provider.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_barcode.dart';
 import '../../domain/services/barcode_management_service.dart';
@@ -14,8 +15,13 @@ final barcodeManagementServiceProvider = Provider<BarcodeManagementService>((
 });
 
 final productBarcodesProvider =
-    FutureProvider.family<List<ProductBarcode>, String>((ref, productId) {
-      return ref.watch(barcodeRepositoryProvider).getBarcodes(productId);
+    StreamProvider.family<List<ProductBarcode>, String>((ref, productId) {
+      final database = ref.watch(databaseProvider);
+      final repository = ref.watch(barcodeRepositoryProvider);
+      return (database.select(database.productBarcodes)
+            ..where((barcode) => barcode.productId.equals(productId)))
+          .watch()
+          .asyncMap((_) => repository.getBarcodes(productId));
     });
 
 final productByBarcodeProvider = FutureProvider.family<Product?, String>((

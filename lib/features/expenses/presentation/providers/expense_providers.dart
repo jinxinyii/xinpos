@@ -8,6 +8,11 @@ final expenseRepositoryProvider = Provider<ExpenseRepository>((ref) {
   return ExpenseRepository(ref.watch(databaseProvider));
 });
 
-final expensesProvider = FutureProvider<List<BusinessExpense>>((ref) {
-  return ref.watch(expenseRepositoryProvider).getExpenses();
+final expensesProvider = StreamProvider<List<BusinessExpense>>((ref) {
+  final database = ref.watch(databaseProvider);
+  final repository = ref.watch(expenseRepositoryProvider);
+  return database
+      .select(database.expenses)
+      .watch()
+      .asyncMap((_) => repository.getExpenses());
 });

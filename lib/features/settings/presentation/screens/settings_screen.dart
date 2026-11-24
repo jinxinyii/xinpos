@@ -20,6 +20,15 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => context.push('/settings/printer'),
             ),
           ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.backup_outlined),
+              title: const Text('Data Backup'),
+              subtitle: const Text('Create and export database backups'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/settings/backup'),
+            ),
+          ),
         ],
       ),
     );

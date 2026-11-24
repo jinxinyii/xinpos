@@ -17,6 +17,7 @@ import '../../features/reports/presentation/screens/sales_reports_screen.dart';
 import '../../features/expenses/presentation/screens/expenses_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/screens/printer_settings_screen.dart';
+import '../../features/settings/presentation/screens/backup_settings_screen.dart';
 import '../../features/reports/presentation/screens/profit_report_screen.dart';
 import 'main_scaffold.dart';
 
@@ -147,6 +148,10 @@ final GoRouter appRouter = GoRouter(
                 GoRoute(
                   path: 'printer',
                   builder: (context, state) => const PrinterSettingsScreen(),
+                ),
+                GoRoute(
+                  path: 'backup',
+                  builder: (context, state) => const BackupSettingsScreen(),
                 ),
               ],
             ),

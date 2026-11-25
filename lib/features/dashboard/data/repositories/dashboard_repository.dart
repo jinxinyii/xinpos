@@ -5,8 +5,9 @@ import '../../domain/entities/dashboard_data.dart';
 
 class DashboardRepository {
   final AppDatabase database;
+  final String businessId;
 
-  DashboardRepository(this.database);
+  DashboardRepository(this.database, {required this.businessId});
 
   Future<DashboardData> getTodayOverview() async {
     final now = DateTime.now();
@@ -26,12 +27,17 @@ class DashboardRepository {
         COALESCE(SUM(CASE WHEN LOWER(p.method) = 'cash' THEN p.amount_centavos ELSE 0 END), 0) AS cash_sales,
         COALESCE(SUM(CASE WHEN LOWER(p.method) = 'gcash' THEN p.amount_centavos ELSE 0 END), 0) AS gcash_sales
       FROM sales s
-      LEFT JOIN payments p ON p.sale_id = s.id
-      WHERE s.status = 'completed'
+      LEFT JOIN payments p ON p.sale_id = s.id AND p.business_id = s.business_id
+      WHERE s.business_id = ?
+        AND s.status = 'completed'
         AND s.sold_at >= ?
         AND s.sold_at < ?
       ''',
-          variables: [Variable.withInt(start), Variable.withInt(end)],
+          variables: [
+            Variable.withString(businessId),
+            Variable.withInt(start),
+            Variable.withInt(end),
+          ],
           readsFrom: {database.sales, database.payments},
         )
         .getSingle();
@@ -42,16 +48,22 @@ class DashboardRepository {
       SELECT s.id, s.receipt_number, s.total_centavos, s.sold_at, s.status,
              COALESCE(
                (SELECT p.method FROM payments p
-                WHERE p.sale_id = s.id
+                WHERE p.sale_id = s.id AND p.business_id = s.business_id
                 ORDER BY p.paid_at DESC LIMIT 1),
                ''
              ) AS payment_method
       FROM sales s
-      WHERE s.sold_at >= ? AND s.sold_at < ?
+      WHERE s.business_id = ?
+        AND s.sold_at >= ?
+        AND s.sold_at < ?
       ORDER BY s.sold_at DESC
       LIMIT 5
       ''',
-          variables: [Variable.withInt(start), Variable.withInt(end)],
+          variables: [
+            Variable.withString(businessId),
+            Variable.withInt(start),
+            Variable.withInt(end),
+          ],
           readsFrom: {database.sales, database.payments},
         )
         .get();

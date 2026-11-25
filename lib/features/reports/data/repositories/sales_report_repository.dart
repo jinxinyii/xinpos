@@ -6,11 +6,13 @@ import '../../domain/entities/sales_report_filter.dart';
 
 class SalesReportRepository {
   final AppDatabase database;
+  final String businessId;
 
-  SalesReportRepository(this.database);
+  SalesReportRepository(this.database, {required this.businessId});
 
   Future<SalesReport> getReport(SalesReportFilter filter) async {
     final variables = [
+      Variable.withString(businessId),
       Variable.withInt(filter.startTimestamp),
       Variable.withInt(filter.endExclusiveTimestamp),
     ];
@@ -21,7 +23,8 @@ class SalesReportRepository {
       SELECT COALESCE(SUM(total_centavos), 0) AS total_revenue,
              COUNT(*) AS transaction_count
       FROM sales
-      WHERE status = 'completed' AND sold_at >= ? AND sold_at < ?
+      WHERE business_id = ? AND status = 'completed'
+        AND sold_at >= ? AND sold_at < ?
       ''',
           variables: variables,
           readsFrom: {database.sales},
@@ -33,10 +36,16 @@ class SalesReportRepository {
           '''
       SELECT COALESCE(SUM(si.quantity), 0) AS total_items
       FROM sale_items si
-      INNER JOIN sales s ON s.id = si.sale_id
-      WHERE s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
+      INNER JOIN sales s ON s.id = si.sale_id AND s.business_id = si.business_id
+      WHERE s.business_id = ? AND si.business_id = ?
+        AND s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
       ''',
-          variables: variables,
+          variables: [
+            Variable.withString(businessId),
+            Variable.withString(businessId),
+            Variable.withInt(filter.startTimestamp),
+            Variable.withInt(filter.endExclusiveTimestamp),
+          ],
           readsFrom: {database.sales, database.saleItems},
         )
         .getSingle();
@@ -48,7 +57,8 @@ class SalesReportRepository {
              COALESCE(SUM(total_centavos), 0) AS revenue,
              COUNT(*) AS transaction_count
       FROM sales
-      WHERE status = 'completed' AND sold_at >= ? AND sold_at < ?
+      WHERE business_id = ? AND status = 'completed'
+        AND sold_at >= ? AND sold_at < ?
       GROUP BY date(sold_at / 1000, 'unixepoch', 'localtime')
       ORDER BY sale_date ASC
       ''',
@@ -60,17 +70,23 @@ class SalesReportRepository {
     final productRows = await database
         .customSelect(
           '''
-      SELECT product_name,
-             COALESCE(SUM(quantity), 0) AS quantity_sold,
-             COALESCE(SUM(line_total_centavos), 0) AS revenue
-      FROM sale_items
-      INNER JOIN sales ON sales.id = sale_items.sale_id
-      WHERE sales.status = 'completed' AND sales.sold_at >= ? AND sales.sold_at < ?
-      GROUP BY product_name
+      SELECT si.product_name,
+             COALESCE(SUM(si.quantity), 0) AS quantity_sold,
+             COALESCE(SUM(si.line_total_centavos), 0) AS revenue
+      FROM sale_items si
+      INNER JOIN sales s ON s.id = si.sale_id AND s.business_id = si.business_id
+      WHERE s.business_id = ? AND si.business_id = ?
+        AND s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
+      GROUP BY si.product_name
       ORDER BY quantity_sold DESC, revenue DESC
       LIMIT 10
       ''',
-          variables: variables,
+          variables: [
+            Variable.withString(businessId),
+            Variable.withString(businessId),
+            Variable.withInt(filter.startTimestamp),
+            Variable.withInt(filter.endExclusiveTimestamp),
+          ],
           readsFrom: {database.sales, database.saleItems},
         )
         .get();
@@ -78,16 +94,22 @@ class SalesReportRepository {
     final paymentRows = await database
         .customSelect(
           '''
-      SELECT LOWER(method) AS method,
-             COALESCE(SUM(amount_centavos), 0) AS amount,
-             COUNT(DISTINCT sale_id) AS transaction_count
-      FROM payments
-      INNER JOIN sales ON sales.id = payments.sale_id
-      WHERE sales.status = 'completed' AND sales.sold_at >= ? AND sales.sold_at < ?
-      GROUP BY LOWER(method)
+      SELECT LOWER(p.method) AS method,
+             COALESCE(SUM(p.amount_centavos), 0) AS amount,
+             COUNT(DISTINCT p.sale_id) AS transaction_count
+      FROM payments p
+      INNER JOIN sales s ON s.id = p.sale_id AND s.business_id = p.business_id
+      WHERE s.business_id = ? AND p.business_id = ?
+        AND s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
+      GROUP BY LOWER(p.method)
       ORDER BY amount DESC
       ''',
-          variables: variables,
+          variables: [
+            Variable.withString(businessId),
+            Variable.withString(businessId),
+            Variable.withInt(filter.startTimestamp),
+            Variable.withInt(filter.endExclusiveTimestamp),
+          ],
           readsFrom: {database.sales, database.payments},
         )
         .get();
@@ -95,18 +117,24 @@ class SalesReportRepository {
     final categoryRows = await database
         .customSelect(
           '''
-      SELECT COALESCE(categories.name, 'Uncategorized') AS category_name,
-             COALESCE(SUM(sale_items.quantity), 0) AS quantity_sold,
-             COALESCE(SUM(sale_items.line_total_centavos), 0) AS revenue
-      FROM sale_items
-      INNER JOIN sales ON sales.id = sale_items.sale_id
-      LEFT JOIN products ON products.id = sale_items.product_id
-      LEFT JOIN categories ON categories.id = products.category_id
-      WHERE sales.status = 'completed' AND sales.sold_at >= ? AND sales.sold_at < ?
-      GROUP BY COALESCE(categories.name, 'Uncategorized')
+      SELECT COALESCE(c.name, 'Uncategorized') AS category_name,
+             COALESCE(SUM(si.quantity), 0) AS quantity_sold,
+             COALESCE(SUM(si.line_total_centavos), 0) AS revenue
+      FROM sale_items si
+      INNER JOIN sales s ON s.id = si.sale_id AND s.business_id = si.business_id
+      LEFT JOIN products p ON p.id = si.product_id AND p.business_id = si.business_id
+      LEFT JOIN categories c ON c.id = p.category_id AND c.business_id = p.business_id
+      WHERE s.business_id = ? AND si.business_id = ?
+        AND s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
+      GROUP BY COALESCE(c.name, 'Uncategorized')
       ORDER BY revenue DESC
       ''',
-          variables: variables,
+          variables: [
+            Variable.withString(businessId),
+            Variable.withString(businessId),
+            Variable.withInt(filter.startTimestamp),
+            Variable.withInt(filter.endExclusiveTimestamp),
+          ],
           readsFrom: {
             database.sales,
             database.saleItems,

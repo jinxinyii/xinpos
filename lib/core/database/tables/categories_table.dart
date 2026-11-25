@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
 class Categories extends Table {
+  TextColumn get businessId => text().withDefault(const Constant('default'))();
+
   TextColumn get id => text()();
 
   TextColumn get name => text().withLength(min: 1, max: 100)();

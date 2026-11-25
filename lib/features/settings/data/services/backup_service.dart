@@ -95,7 +95,7 @@ class BackupService {
         'format': 'xinPOS-backup',
         'formatVersion': 1,
         'app': 'xinPOS',
-        'schemaVersion': 6,
+        'schemaVersion': 7,
         'createdAt': now.toUtc().toIso8601String(),
         'databaseFile': 'xinpos_db.sqlite',
         'databaseBytes': databaseBytes.length,
@@ -335,10 +335,11 @@ class BackupService {
     }
 
     final schemaVersionValue = manifest['schemaVersion'];
-    if (schemaVersionValue is! int || schemaVersionValue != 6) {
+    if (schemaVersionValue is! int ||
+        (schemaVersionValue != 6 && schemaVersionValue != 7)) {
       throw FormatException(
         'This backup uses database schema $schemaVersionValue. '
-        'This app currently supports schema 6 backups.',
+        'This app supports schema 6 and 7 backups.',
       );
     }
     final schemaVersion = schemaVersionValue;

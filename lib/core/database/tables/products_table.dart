@@ -3,6 +3,8 @@ import 'package:drift/drift.dart';
 import 'categories_table.dart';
 
 class Products extends Table {
+  TextColumn get businessId => text().withDefault(const Constant('default'))();
+
   TextColumn get id => text()();
 
   TextColumn get categoryId => text().nullable().references(

@@ -18,6 +18,8 @@ import '../../features/expenses/presentation/screens/expenses_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/screens/printer_settings_screen.dart';
 import '../../features/settings/presentation/screens/backup_settings_screen.dart';
+import '../../features/settings/presentation/screens/diagnostic_logs_screen.dart';
+import '../../features/businesses/presentation/screens/business_management_screen.dart';
 import '../../features/reports/presentation/screens/profit_report_screen.dart';
 import 'main_scaffold.dart';
 
@@ -146,12 +148,20 @@ final GoRouter appRouter = GoRouter(
               builder: (context, state) => const SettingsScreen(),
               routes: [
                 GoRoute(
+                  path: 'logs',
+                  builder: (context, state) => const DiagnosticLogsScreen(),
+                ),
+                GoRoute(
                   path: 'printer',
                   builder: (context, state) => const PrinterSettingsScreen(),
                 ),
                 GoRoute(
                   path: 'backup',
                   builder: (context, state) => const BackupSettingsScreen(),
+                ),
+                GoRoute(
+                  path: 'businesses',
+                  builder: (context, state) => const BusinessManagementScreen(),
                 ),
               ],
             ),

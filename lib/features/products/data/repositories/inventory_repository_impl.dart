@@ -7,15 +7,20 @@ import '../../domain/repositories/inventory_repository.dart';
 class InventoryRepositoryImpl implements InventoryRepository {
   final AppDatabase database;
 
-  InventoryRepositoryImpl(this.database);
+  final String businessId;
+
+  InventoryRepositoryImpl(this.database, this.businessId);
 
   @override
   Future<int> getStockQuantity(String productId) async {
     final result = await database
         .customSelect(
           'SELECT COALESCE(SUM(quantity_delta), 0) AS stock '
-          'FROM inventory_movements WHERE product_id = ?',
-          variables: [Variable.withString(productId)],
+          'FROM inventory_movements WHERE product_id = ? AND business_id = ?',
+          variables: [
+            Variable.withString(productId),
+            Variable.withString(businessId),
+          ],
           readsFrom: {database.inventoryMovements},
         )
         .getSingle();
@@ -27,6 +32,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<List<domain.InventoryMovement>> getMovements(String productId) async {
     final query = database.select(database.inventoryMovements)
       ..where((movement) => movement.productId.equals(productId))
+      ..where((movement) => movement.businessId.equals(businessId))
       ..orderBy([(movement) => OrderingTerm.desc(movement.createdAt)]);
 
     final rows = await query.get();
@@ -52,7 +58,8 @@ class InventoryRepositoryImpl implements InventoryRepository {
   Future<void> recordMovement(domain.InventoryMovement movement) async {
     await database.transaction(() async {
       final productQuery = database.select(database.products)
-        ..where((product) => product.id.equals(movement.productId));
+        ..where((product) => product.id.equals(movement.productId))
+        ..where((product) => product.businessId.equals(businessId));
 
       final product = await productQuery.getSingleOrNull();
 
@@ -79,6 +86,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
           .into(database.inventoryMovements)
           .insert(
             InventoryMovementsCompanion.insert(
+              businessId: Value(businessId),
               id: movement.id,
               productId: Value(movement.productId),
               productNameSnapshot: movement.productNameSnapshot,

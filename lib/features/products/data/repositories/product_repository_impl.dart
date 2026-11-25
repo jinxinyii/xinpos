@@ -7,7 +7,9 @@ import '../../domain/repositories/product_repository.dart';
 class ProductRepositoryImpl implements ProductRepository {
   final AppDatabase database;
 
-  ProductRepositoryImpl(this.database);
+  final String businessId;
+
+  ProductRepositoryImpl(this.database, this.businessId);
 
   @override
   Future<List<domain.Product>> getProducts({
@@ -15,35 +17,35 @@ class ProductRepositoryImpl implements ProductRepository {
     String? categoryId,
     bool activeOnly = true,
   }) async {
-    final query = database.select(database.products);
+    final query = database.select(database.products)
+      ..where((product) => product.businessId.equals(businessId));
 
-    query.where((product) {
-      Expression<bool> condition = const Constant(true);
+    if (activeOnly) {
+      query.where((product) => product.isActive.equals(true));
+    }
 
-      if (activeOnly) {
-        condition = condition & product.isActive.equals(true);
-      }
+    if (categoryId != null) {
+      query.where((product) => product.categoryId.equals(categoryId));
+    }
 
-      if (categoryId != null) {
-        condition = condition & product.categoryId.equals(categoryId);
-      }
-
-      final term = search?.trim();
-
-      if (term != null && term.isNotEmpty) {
-        condition =
-            condition &
-            (product.name.contains(term) | product.sku.contains(term));
-      }
-
-      return condition;
-    });
+    final term = search?.trim();
 
     query.orderBy([(product) => OrderingTerm.asc(product.name)]);
 
     final rows = await query.get();
 
-    return rows
+    final filteredRows = term == null || term.isEmpty
+        ? rows
+        : rows
+              .where(
+                (row) =>
+                    row.name.toLowerCase().contains(term.toLowerCase()) ||
+                    (row.sku?.toLowerCase().contains(term.toLowerCase()) ??
+                        false),
+              )
+              .toList();
+
+    return filteredRows
         .map(
           (row) => domain.Product(
             id: row.id,
@@ -66,7 +68,8 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<domain.Product?> getProductById(String id) async {
     final query = database.select(database.products)
-      ..where((product) => product.id.equals(id));
+      ..where((product) => product.id.equals(id))
+      ..where((product) => product.businessId.equals(businessId));
 
     final row = await query.getSingleOrNull();
 
@@ -94,6 +97,7 @@ class ProductRepositoryImpl implements ProductRepository {
         .into(database.products)
         .insertOnConflictUpdate(
           ProductsCompanion(
+            businessId: Value(businessId),
             id: Value(product.id),
             categoryId: Value(product.categoryId),
             name: Value(product.name),
@@ -112,13 +116,14 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<void> archiveProduct(String id) async {
-    await (database.update(
-      database.products,
-    )..where((product) => product.id.equals(id))).write(
-      ProductsCompanion(
-        isActive: const Value(false),
-        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ),
-    );
+    await (database.update(database.products)
+          ..where((product) => product.id.equals(id))
+          ..where((product) => product.businessId.equals(businessId)))
+        .write(
+          ProductsCompanion(
+            isActive: const Value(false),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ),
+        );
   }
 }

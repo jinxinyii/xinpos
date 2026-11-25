@@ -8,10 +8,20 @@ import '../../domain/repositories/barcode_repository.dart';
 class BarcodeRepositoryImpl implements BarcodeRepository {
   final AppDatabase database;
 
-  BarcodeRepositoryImpl(this.database);
+  final String businessId;
+
+  BarcodeRepositoryImpl(this.database, this.businessId);
 
   @override
   Future<List<domain.ProductBarcode>> getBarcodes(String productId) async {
+    final product =
+        await (database.select(database.products)
+              ..where((table) => table.id.equals(productId))
+              ..where((table) => table.businessId.equals(businessId)))
+            .getSingleOrNull();
+
+    if (product == null) return [];
+
     final query = database.select(database.productBarcodes)
       ..where((barcode) => barcode.productId.equals(productId))
       ..orderBy([(barcode) => OrderingTerm.asc(barcode.createdAt)]);
@@ -44,11 +54,10 @@ class BarcodeRepositoryImpl implements BarcodeRepository {
     if (barcodeRow == null) return null;
 
     final productRow =
-        await (database.select(database.products)..where(
-              (table) =>
-                  table.id.equals(barcodeRow.productId) &
-                  table.isActive.equals(true),
-            ))
+        await (database.select(database.products)
+              ..where((table) => table.id.equals(barcodeRow.productId))
+              ..where((table) => table.businessId.equals(businessId))
+              ..where((table) => table.isActive.equals(true)))
             .getSingleOrNull();
 
     if (productRow == null) return null;
@@ -73,11 +82,10 @@ class BarcodeRepositoryImpl implements BarcodeRepository {
   Future<void> addBarcode(domain.ProductBarcode barcode) async {
     await database.transaction(() async {
       final product =
-          await (database.select(database.products)..where(
-                (table) =>
-                    table.id.equals(barcode.productId) &
-                    table.isActive.equals(true),
-              ))
+          await (database.select(database.products)
+                ..where((table) => table.id.equals(barcode.productId))
+                ..where((table) => table.businessId.equals(businessId))
+                ..where((table) => table.isActive.equals(true)))
               .getSingleOrNull();
 
       if (product == null) {
@@ -99,6 +107,20 @@ class BarcodeRepositoryImpl implements BarcodeRepository {
 
   @override
   Future<void> deleteBarcode(String barcodeId) async {
+    final barcode = await (database.select(
+      database.productBarcodes,
+    )..where((table) => table.id.equals(barcodeId))).getSingleOrNull();
+
+    if (barcode == null) return;
+
+    final product =
+        await (database.select(database.products)
+              ..where((table) => table.id.equals(barcode.productId))
+              ..where((table) => table.businessId.equals(businessId)))
+            .getSingleOrNull();
+
+    if (product == null) return;
+
     await (database.delete(
       database.productBarcodes,
     )..where((table) => table.id.equals(barcodeId))).go();

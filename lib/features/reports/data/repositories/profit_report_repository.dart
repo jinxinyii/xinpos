@@ -6,11 +6,13 @@ import '../../domain/entities/sales_report_filter.dart';
 
 class ProfitReportRepository {
   final AppDatabase database;
+  final String businessId;
 
-  ProfitReportRepository(this.database);
+  ProfitReportRepository(this.database, {required this.businessId});
 
   Future<ProfitReport> getReport(SalesReportFilter filter) async {
-    final variables = [
+    final salesVariables = [
+      Variable.withString(businessId),
       Variable.withInt(filter.startTimestamp),
       Variable.withInt(filter.endExclusiveTimestamp),
     ];
@@ -21,9 +23,9 @@ class ProfitReportRepository {
       SELECT COALESCE(SUM(total_centavos), 0) AS revenue,
              COUNT(*) AS transaction_count
       FROM sales
-      WHERE status = 'completed' AND sold_at >= ? AND sold_at < ?
+      WHERE business_id = ? AND status = 'completed' AND sold_at >= ? AND sold_at < ?
       ''',
-          variables: variables,
+          variables: salesVariables,
           readsFrom: {database.sales},
         )
         .getSingle();
@@ -34,10 +36,16 @@ class ProfitReportRepository {
       SELECT COALESCE(SUM(si.quantity), 0) AS items_sold,
              COALESCE(SUM(si.quantity * si.unit_cost_centavos), 0) AS cogs
       FROM sale_items si
-      INNER JOIN sales s ON s.id = si.sale_id
-      WHERE s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
+      INNER JOIN sales s ON s.id = si.sale_id AND s.business_id = si.business_id
+      WHERE s.business_id = ? AND si.business_id = ?
+        AND s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
       ''',
-          variables: variables,
+          variables: [
+            Variable.withString(businessId),
+            Variable.withString(businessId),
+            Variable.withInt(filter.startTimestamp),
+            Variable.withInt(filter.endExclusiveTimestamp),
+          ],
           readsFrom: {database.sales, database.saleItems},
         )
         .getSingle();
@@ -47,9 +55,9 @@ class ProfitReportRepository {
           '''
       SELECT COALESCE(SUM(amount_centavos), 0) AS expenses
       FROM expenses
-      WHERE expense_date >= ? AND expense_date < ?
+      WHERE business_id = ? AND expense_date >= ? AND expense_date < ?
       ''',
-          variables: variables,
+          variables: salesVariables,
           readsFrom: {database.expenses},
         )
         .getSingle();
@@ -64,10 +72,10 @@ class ProfitReportRepository {
           COALESCE(SUM((
             SELECT SUM(si.quantity * si.unit_cost_centavos)
             FROM sale_items si
-            WHERE si.sale_id = sales.id
+            WHERE si.sale_id = sales.id AND si.business_id = sales.business_id
           )), 0) AS cogs
         FROM sales
-        WHERE status = 'completed' AND sold_at >= ? AND sold_at < ?
+        WHERE business_id = ? AND status = 'completed' AND sold_at >= ? AND sold_at < ?
         GROUP BY date(sold_at / 1000, 'unixepoch', 'localtime')
       ),
       daily_expenses AS (
@@ -75,7 +83,7 @@ class ProfitReportRepository {
           date(expense_date / 1000, 'unixepoch', 'localtime') AS report_date,
           COALESCE(SUM(amount_centavos), 0) AS expenses
         FROM expenses
-        WHERE expense_date >= ? AND expense_date < ?
+        WHERE business_id = ? AND expense_date >= ? AND expense_date < ?
         GROUP BY date(expense_date / 1000, 'unixepoch', 'localtime')
       ),
       report_dates AS (
@@ -92,7 +100,7 @@ class ProfitReportRepository {
       LEFT JOIN daily_expenses ON daily_expenses.report_date = report_dates.report_date
       ORDER BY report_dates.report_date ASC
       ''',
-          variables: [...variables, ...variables],
+          variables: [...salesVariables, ...salesVariables],
           readsFrom: {database.sales, database.saleItems, database.expenses},
         )
         .get();
@@ -102,11 +110,11 @@ class ProfitReportRepository {
           '''
       SELECT category, COALESCE(SUM(amount_centavos), 0) AS amount
       FROM expenses
-      WHERE expense_date >= ? AND expense_date < ?
+      WHERE business_id = ? AND expense_date >= ? AND expense_date < ?
       GROUP BY category
       ORDER BY amount DESC
       ''',
-          variables: variables,
+          variables: salesVariables,
           readsFrom: {database.expenses},
         )
         .get();
@@ -119,13 +127,19 @@ class ProfitReportRepository {
              COALESCE(SUM(si.line_total_centavos), 0) AS revenue,
              COALESCE(SUM(si.quantity * si.unit_cost_centavos), 0) AS cogs
       FROM sale_items si
-      INNER JOIN sales s ON s.id = si.sale_id
-      WHERE s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
+      INNER JOIN sales s ON s.id = si.sale_id AND s.business_id = si.business_id
+      WHERE s.business_id = ? AND si.business_id = ?
+        AND s.status = 'completed' AND s.sold_at >= ? AND s.sold_at < ?
       GROUP BY si.product_name
       ORDER BY (SUM(si.line_total_centavos) - SUM(si.quantity * si.unit_cost_centavos)) DESC, quantity_sold DESC
       LIMIT 10
       ''',
-          variables: variables,
+          variables: [
+            Variable.withString(businessId),
+            Variable.withString(businessId),
+            Variable.withInt(filter.startTimestamp),
+            Variable.withInt(filter.endExclusiveTimestamp),
+          ],
           readsFrom: {database.sales, database.saleItems},
         )
         .get();

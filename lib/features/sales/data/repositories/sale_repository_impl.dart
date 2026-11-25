@@ -13,8 +13,9 @@ import '../../domain/repositories/sale_repository.dart';
 
 class SaleRepositoryImpl implements SaleRepository {
   final AppDatabase database;
+  final String businessId;
 
-  SaleRepositoryImpl(this.database);
+  SaleRepositoryImpl(this.database, {this.businessId = 'default'});
 
   static const _uuid = Uuid();
 
@@ -54,8 +55,19 @@ class SaleRepositoryImpl implements SaleRepository {
     }
 
     return database.transaction(() async {
+      final activeBusiness =
+          await (database.select(database.businessDatasets)
+                ..where((business) => business.id.equals(businessId))
+                ..where((business) => business.isArchived.equals(false)))
+              .getSingleOrNull();
+
+      if (activeBusiness == null) {
+        throw StateError('The selected business is unavailable or archived.');
+      }
+
       final productsQuery = database.select(database.products)
-        ..where((product) => product.id.isIn(quantities.keys));
+        ..where((product) => product.id.isIn(quantities.keys))
+        ..where((product) => product.businessId.equals(businessId));
 
       final products = await productsQuery.get();
       final productsById = {
@@ -81,8 +93,11 @@ class SaleRepositoryImpl implements SaleRepository {
           final stockResult = await database
               .customSelect(
                 'SELECT COALESCE(SUM(quantity_delta), 0) AS stock '
-                'FROM inventory_movements WHERE product_id = ?',
-                variables: [Variable.withString(product.id)],
+                'FROM inventory_movements WHERE product_id = ? AND business_id = ?',
+                variables: [
+                  Variable.withString(product.id),
+                  Variable.withString(businessId),
+                ],
                 readsFrom: {database.inventoryMovements},
               )
               .getSingle();
@@ -124,26 +139,32 @@ class SaleRepositoryImpl implements SaleRepository {
               soldAt: now,
               createdAt: now,
               updatedAt: now,
+              businessId: Value(businessId),
             ),
           );
 
       final queueDate = DateFormat('yyyy-MM-dd')
           .format(DateTime.fromMillisecondsSinceEpoch(now));
       await database.customStatement(
-        'INSERT INTO queue_daily_counters (queue_date, last_number) '
-        'VALUES (?, (SELECT COALESCE(MAX(queue_number), 0) + 1 '
-        'FROM queue_entries WHERE queue_date = ?)) '
-        'ON CONFLICT(queue_date) DO UPDATE SET last_number = '
+        'INSERT INTO queue_daily_counters '
+        '(business_id, queue_date, last_number) '
+        'VALUES (?, ?, (SELECT COALESCE(MAX(queue_number), 0) + 1 '
+        'FROM queue_entries WHERE business_id = ? AND queue_date = ?)) '
+        'ON CONFLICT(business_id, queue_date) DO UPDATE SET last_number = '
         'MAX(queue_daily_counters.last_number, '
         '(SELECT COALESCE(MAX(queue_number), 0) FROM queue_entries '
-        'WHERE queue_date = ?)) + 1',
-        [queueDate, queueDate, queueDate],
+        'WHERE business_id = ? AND queue_date = ?)) + 1',
+        [businessId, queueDate, businessId, queueDate, businessId, queueDate],
       );
 
       final counterRows = await database
           .customSelect(
-            'SELECT last_number FROM queue_daily_counters WHERE queue_date = ?',
-            variables: [Variable.withString(queueDate)],
+            'SELECT last_number FROM queue_daily_counters '
+            'WHERE business_id = ? AND queue_date = ?',
+            variables: [
+              Variable.withString(businessId),
+              Variable.withString(queueDate),
+            ],
             readsFrom: {database.queueDailyCounters},
           )
           .getSingle();
@@ -161,6 +182,7 @@ class SaleRepositoryImpl implements SaleRepository {
               queueCode: queueCode,
               createdAt: now,
               updatedAt: now,
+              businessId: Value(businessId),
             ),
           );
 
@@ -182,6 +204,7 @@ class SaleRepositoryImpl implements SaleRepository {
                 unitPriceCentavos: product.sellingPriceCentavos,
                 unitCostCentavos: product.costPriceCentavos,
                 lineTotalCentavos: lineTotal,
+                businessId: Value(businessId),
               ),
             );
 
@@ -199,6 +222,7 @@ class SaleRepositoryImpl implements SaleRepository {
                   referenceId: Value(saleId),
                   note: Value('Sale $receiptNumber'),
                   createdAt: now,
+                  businessId: Value(businessId),
                 ),
               );
         }
@@ -223,6 +247,7 @@ class SaleRepositoryImpl implements SaleRepository {
                     : referenceNumber!.trim(),
               ),
               paidAt: now,
+              businessId: Value(businessId),
             ),
           );
 
@@ -255,18 +280,19 @@ class SaleRepositoryImpl implements SaleRepository {
         COUNT(si.id) AS item_count,
         COALESCE(
           (SELECT p.method FROM payments p
-           WHERE p.sale_id = s.id
+           WHERE p.sale_id = s.id AND p.business_id = s.business_id
            ORDER BY p.paid_at DESC LIMIT 1),
           ''
         ) AS payment_method
       FROM sales s
-      LEFT JOIN sale_items si ON si.sale_id = s.id
-      LEFT JOIN queue_entries qe ON qe.sale_id = s.id
-      WHERE (? = '' OR s.receipt_number LIKE ?)
+      LEFT JOIN sale_items si ON si.sale_id = s.id AND si.business_id = s.business_id
+      LEFT JOIN queue_entries qe ON qe.sale_id = s.id AND qe.business_id = s.business_id
+      WHERE s.business_id = ? AND (? = '' OR s.receipt_number LIKE ?)
       GROUP BY s.id
       ORDER BY s.sold_at DESC
       ''',
           variables: [
+            Variable.withString(businessId),
             Variable.withString(normalizedSearch),
             Variable.withString('%$normalizedSearch%'),
           ],
@@ -305,10 +331,13 @@ class SaleRepositoryImpl implements SaleRepository {
              qe.queue_code
       FROM sales s
       LEFT JOIN queue_entries qe ON qe.sale_id = s.id
-      WHERE s.id = ?
+      WHERE s.id = ? AND s.business_id = ?
       LIMIT 1
       ''',
-          variables: [Variable.withString(saleId)],
+          variables: [
+            Variable.withString(saleId),
+            Variable.withString(businessId),
+          ],
           readsFrom: {database.sales},
         )
         .get();
@@ -323,10 +352,13 @@ class SaleRepositoryImpl implements SaleRepository {
       SELECT product_name, sku, quantity, unit_price_centavos,
              unit_cost_centavos, line_total_centavos
       FROM sale_items
-      WHERE sale_id = ?
+      WHERE sale_id = ? AND business_id = ?
       ORDER BY rowid ASC
       ''',
-          variables: [Variable.withString(saleId)],
+          variables: [
+            Variable.withString(saleId),
+            Variable.withString(businessId),
+          ],
           readsFrom: {database.saleItems},
         )
         .get();
@@ -337,11 +369,14 @@ class SaleRepositoryImpl implements SaleRepository {
       SELECT method, amount_centavos, amount_tendered_centavos,
              reference_number, paid_at
       FROM payments
-      WHERE sale_id = ?
+      WHERE sale_id = ? AND business_id = ?
       ORDER BY paid_at DESC
       LIMIT 1
       ''',
-          variables: [Variable.withString(saleId)],
+          variables: [
+            Variable.withString(saleId),
+            Variable.withString(businessId),
+          ],
           readsFrom: {database.payments},
         )
         .get();
@@ -415,10 +450,13 @@ class SaleRepositoryImpl implements SaleRepository {
       SELECT id, sale_id, queue_date, queue_number, queue_code,
              status, preparation_status, created_at, updated_at
       FROM queue_entries
-      WHERE queue_date = ?
+      WHERE queue_date = ? AND business_id = ?
       ORDER BY queue_number ASC
       ''',
-          variables: [Variable.withString(date)],
+          variables: [
+            Variable.withString(date),
+            Variable.withString(businessId),
+          ],
           readsFrom: {database.queueEntries},
         )
         .get();
@@ -438,9 +476,12 @@ class SaleRepositoryImpl implements SaleRepository {
         SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
         SUM(CASE WHEN status = 'skipped' THEN 1 ELSE 0 END) AS skipped
       FROM queue_entries
-      WHERE queue_date = ?
+      WHERE queue_date = ? AND business_id = ?
       ''',
-          variables: [Variable.withString(date)],
+          variables: [
+            Variable.withString(date),
+            Variable.withString(businessId),
+          ],
           readsFrom: {database.queueEntries},
         )
         .getSingle();
@@ -462,6 +503,7 @@ class SaleRepositoryImpl implements SaleRepository {
                 ..where(
                   (entry) =>
                       entry.queueDate.equals(date) &
+                      entry.businessId.equals(businessId) &
                       entry.status.equals('serving'),
                 )
                 ..limit(1))
@@ -478,6 +520,7 @@ class SaleRepositoryImpl implements SaleRepository {
                 ..where(
                   (entry) =>
                       entry.queueDate.equals(date) &
+                      entry.businessId.equals(businessId) &
                       entry.status.equals('waiting'),
                 )
                 ..orderBy([(entry) => OrderingTerm.asc(entry.queueNumber)])
@@ -487,14 +530,16 @@ class SaleRepositoryImpl implements SaleRepository {
       if (next == null) return null;
 
       final now = DateTime.now().millisecondsSinceEpoch;
-      await (database.update(
-        database.queueEntries,
-      )..where((entry) => entry.id.equals(next.id))).write(
-        QueueEntriesCompanion(
-          status: const Value('serving'),
-          updatedAt: Value(now),
-        ),
-      );
+      await (database.update(database.queueEntries)..where(
+            (entry) =>
+                entry.id.equals(next.id) & entry.businessId.equals(businessId),
+          ))
+          .write(
+            QueueEntriesCompanion(
+              status: const Value('serving'),
+              updatedAt: Value(now),
+            ),
+          );
 
       return QueueEntry(
         id: next.id,
@@ -519,6 +564,7 @@ class SaleRepositoryImpl implements SaleRepository {
                 ..where(
                   (entry) =>
                       entry.queueDate.equals(date) &
+                      entry.businessId.equals(businessId) &
                       entry.status.equals('serving'),
                 )
                 ..limit(1))
@@ -535,6 +581,7 @@ class SaleRepositoryImpl implements SaleRepository {
                 ..where(
                   (entry) =>
                       entry.queueDate.equals(date) &
+                      entry.businessId.equals(businessId) &
                       entry.status.equals('waiting') &
                       entry.preparationStatus.equals('ready'),
                 )
@@ -545,14 +592,16 @@ class SaleRepositoryImpl implements SaleRepository {
       if (next == null) return null;
 
       final now = DateTime.now().millisecondsSinceEpoch;
-      await (database.update(
-        database.queueEntries,
-      )..where((entry) => entry.id.equals(next.id))).write(
-        QueueEntriesCompanion(
-          status: const Value('serving'),
-          updatedAt: Value(now),
-        ),
-      );
+      await (database.update(database.queueEntries)..where(
+            (entry) =>
+                entry.id.equals(next.id) & entry.businessId.equals(businessId),
+          ))
+          .write(
+            QueueEntriesCompanion(
+              status: const Value('serving'),
+              updatedAt: Value(now),
+            ),
+          );
 
       return QueueEntry(
         id: next.id,
@@ -584,7 +633,11 @@ class SaleRepositoryImpl implements SaleRepository {
   ) async {
     final entry =
         await (database.select(database.queueEntries)
-              ..where((row) => row.id.equals(queueEntryId))
+              ..where(
+                (row) =>
+                    row.id.equals(queueEntryId) &
+                    row.businessId.equals(businessId),
+              )
               ..limit(1))
             .getSingleOrNull();
 
@@ -595,14 +648,16 @@ class SaleRepositoryImpl implements SaleRepository {
       );
     }
 
-    await (database.update(
-      database.queueEntries,
-    )..where((row) => row.id.equals(queueEntryId))).write(
-      QueueEntriesCompanion(
-        preparationStatus: Value(preparationStatus),
-        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ),
-    );
+    await (database.update(database.queueEntries)..where(
+          (row) =>
+              row.id.equals(queueEntryId) & row.businessId.equals(businessId),
+        ))
+        .write(
+          QueueEntriesCompanion(
+            preparationStatus: Value(preparationStatus),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ),
+        );
   }
 
   @override
@@ -615,7 +670,11 @@ class SaleRepositoryImpl implements SaleRepository {
     await database.transaction(() async {
       final entry =
           await (database.select(database.queueEntries)
-                ..where((row) => row.id.equals(queueEntryId))
+                ..where(
+                  (row) =>
+                      row.id.equals(queueEntryId) &
+                      row.businessId.equals(businessId),
+                )
                 ..limit(1))
               .getSingleOrNull();
 
@@ -624,14 +683,16 @@ class SaleRepositoryImpl implements SaleRepository {
         throw StateError('Only waiting or serving entries can be skipped.');
       }
 
-      await (database.update(
-        database.queueEntries,
-      )..where((row) => row.id.equals(queueEntryId))).write(
-        QueueEntriesCompanion(
-          status: const Value('skipped'),
-          updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-        ),
-      );
+      await (database.update(database.queueEntries)..where(
+            (row) =>
+                row.id.equals(queueEntryId) & row.businessId.equals(businessId),
+          ))
+          .write(
+            QueueEntriesCompanion(
+              status: const Value('skipped'),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
     });
   }
 
@@ -642,7 +703,11 @@ class SaleRepositoryImpl implements SaleRepository {
   }) async {
     final entry =
         await (database.select(database.queueEntries)
-              ..where((row) => row.id.equals(queueEntryId))
+              ..where(
+                (row) =>
+                    row.id.equals(queueEntryId) &
+                    row.businessId.equals(businessId),
+              )
               ..limit(1))
             .getSingleOrNull();
 
@@ -651,13 +716,15 @@ class SaleRepositoryImpl implements SaleRepository {
       throw StateError('This queue entry can no longer be updated.');
     }
 
-    await (database.update(
-      database.queueEntries,
-    )..where((row) => row.id.equals(queueEntryId))).write(
-      QueueEntriesCompanion(
-        status: Value(newStatus),
-        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ),
-    );
+    await (database.update(database.queueEntries)..where(
+          (row) =>
+              row.id.equals(queueEntryId) & row.businessId.equals(businessId),
+        ))
+        .write(
+          QueueEntriesCompanion(
+            status: Value(newStatus),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ),
+        );
   }
 }

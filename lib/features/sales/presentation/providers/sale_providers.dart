@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/providers/database_provider.dart';
+import '../../../businesses/presentation/providers/active_business_provider.dart';
 import '../../data/repositories/sale_repository_impl.dart';
 import '../../domain/entities/sale_detail.dart';
 import '../../domain/entities/sale_summary.dart';
@@ -9,7 +10,9 @@ import '../../domain/repositories/sale_repository.dart';
 import '../../domain/services/sale_checkout_service.dart';
 
 final saleRepositoryProvider = Provider<SaleRepository>((ref) {
-  return SaleRepositoryImpl(ref.watch(databaseProvider));
+  final database = ref.watch(databaseProvider);
+  final businessId = ref.watch(activeBusinessProvider);
+  return SaleRepositoryImpl(database, businessId: businessId);
 });
 
 final saleCheckoutServiceProvider = Provider<SaleCheckoutService>((ref) {

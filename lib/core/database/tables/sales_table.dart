@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
 class Sales extends Table {
+  TextColumn get businessId => text().withDefault(const Constant('default'))();
+
   TextColumn get id => text()();
 
   TextColumn get receiptNumber => text().unique()();

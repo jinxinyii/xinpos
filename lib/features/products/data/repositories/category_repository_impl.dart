@@ -7,11 +7,15 @@ import '../../domain/repositories/category_repository.dart';
 class CategoryRepositoryImpl implements CategoryRepository {
   final AppDatabase database;
 
-  CategoryRepositoryImpl(this.database);
+  final String businessId;
+
+  CategoryRepositoryImpl(this.database, this.businessId);
 
   @override
   Future<List<domain.Category>> getCategories({bool activeOnly = true}) async {
     final query = database.select(database.categories);
+
+    query.where((category) => category.businessId.equals(businessId));
 
     if (activeOnly) {
       query.where((category) => category.isActive.equals(true));
@@ -38,7 +42,8 @@ class CategoryRepositoryImpl implements CategoryRepository {
   @override
   Future<domain.Category?> getCategoryById(String id) async {
     final query = database.select(database.categories)
-      ..where((category) => category.id.equals(id));
+      ..where((category) => category.id.equals(id))
+      ..where((category) => category.businessId.equals(businessId));
 
     final row = await query.getSingleOrNull();
 
@@ -60,6 +65,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
         .into(database.categories)
         .insertOnConflictUpdate(
           CategoriesCompanion(
+            businessId: Value(businessId),
             id: Value(category.id),
             name: Value(category.name),
             description: Value(category.description),
@@ -72,13 +78,14 @@ class CategoryRepositoryImpl implements CategoryRepository {
 
   @override
   Future<void> archiveCategory(String id) async {
-    await (database.update(
-      database.categories,
-    )..where((category) => category.id.equals(id))).write(
-      CategoriesCompanion(
-        isActive: const Value(false),
-        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ),
-    );
+    await (database.update(database.categories)
+          ..where((category) => category.id.equals(id))
+          ..where((category) => category.businessId.equals(businessId)))
+        .write(
+          CategoriesCompanion(
+            isActive: const Value(false),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ),
+        );
   }
 }

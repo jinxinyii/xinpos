@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart';
 
 import '../../../../shared/providers/database_provider.dart';
+import '../../../businesses/presentation/providers/active_business_provider.dart';
 import '../../domain/entities/product.dart';
 import 'product_providers.dart';
 
@@ -12,7 +14,8 @@ final productsListProvider =
       final repository = ref.watch(productRepositoryProvider);
       return database
           .customSelect(
-            'SELECT 1 FROM products',
+            'SELECT 1 FROM products WHERE business_id = ?',
+            variables: [Variable.withString(ref.watch(activeBusinessProvider))],
             readsFrom: {database.products},
           )
           .watch()

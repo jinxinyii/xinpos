@@ -22,6 +22,24 @@ class SettingsScreen extends StatelessWidget {
           ),
           Card(
             child: ListTile(
+              leading: const Icon(Icons.storefront_outlined),
+              title: const Text('Business Management'),
+              subtitle: const Text('Create and manage business datasets'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/settings/businesses'),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: const Text('Diagnostic Logs'),
+              subtitle: const Text('View, export, and clear app error logs'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/settings/logs'),
+            ),
+          ),
+          Card(
+            child: ListTile(
               leading: const Icon(Icons.backup_outlined),
               title: const Text('Data Backup'),
               subtitle: const Text('Create and export database backups'),

@@ -3,6 +3,8 @@ import 'package:drift/drift.dart';
 import 'sales_table.dart';
 
 class QueueEntries extends Table {
+  TextColumn get businessId => text().withDefault(const Constant('default'))();
+
   TextColumn get id => text()();
 
   TextColumn get saleId =>
@@ -28,6 +30,6 @@ class QueueEntries extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [
-    {queueDate, queueNumber},
+    {businessId, queueDate, queueNumber},
   ];
 }

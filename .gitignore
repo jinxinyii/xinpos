@@ -46,3 +46,11 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# xinPOS generated diagnostic data
+xinpos_logs/
+**/xinpos_logs/
+diagnostic-logs/
+**/diagnostic-logs/
+xinpos-diagnostic-logs*.txt
+*.diagnostic.log

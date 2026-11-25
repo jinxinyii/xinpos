@@ -3,6 +3,8 @@ import 'package:drift/drift.dart';
 import 'products_table.dart';
 
 class InventoryMovements extends Table {
+  TextColumn get businessId => text().withDefault(const Constant('default'))();
+
   TextColumn get id => text()();
 
   TextColumn get productId => text().nullable().references(

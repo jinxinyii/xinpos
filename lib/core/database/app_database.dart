@@ -39,8 +39,11 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'xinpos_db'));
 
+  /// Creates an in-memory or otherwise supplied database for automated tests.
+  AppDatabase.forTesting(super.executor);
+
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -171,6 +174,43 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'ALTER TABLE queue_entries_business_new RENAME TO queue_entries',
         );
+      }
+      if (from < 8) {
+        // Rebuild the table so a SKU is unique only within its business.
+        // Product IDs remain unchanged, keeping all existing child references
+        // (sale items, inventory movements, and barcodes) valid.
+        await customStatement('PRAGMA defer_foreign_keys = ON');
+        await customStatement(
+          'CREATE TABLE products_new ('
+          'business_id TEXT NOT NULL DEFAULT \'default\', '
+          'id TEXT NOT NULL PRIMARY KEY, '
+          'category_id TEXT REFERENCES categories(id) ON DELETE SET NULL, '
+          'name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 150), '
+          'sku TEXT, '
+          'description TEXT, '
+          'cost_price_centavos INTEGER NOT NULL, '
+          'selling_price_centavos INTEGER NOT NULL, '
+          'reorder_level INTEGER NOT NULL DEFAULT 0, '
+          'track_inventory INTEGER NOT NULL DEFAULT 1 '
+          'CHECK (track_inventory IN (0, 1)), '
+          'is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)), '
+          'created_at INTEGER NOT NULL, '
+          'updated_at INTEGER NOT NULL, '
+          'UNIQUE(business_id, sku)'
+          ')',
+        );
+        await customStatement(
+          'INSERT INTO products_new ('
+          'business_id, id, category_id, name, sku, description, '
+          'cost_price_centavos, selling_price_centavos, reorder_level, '
+          'track_inventory, is_active, created_at, updated_at'
+          ') '
+          'SELECT business_id, id, category_id, name, sku, description, '
+          'cost_price_centavos, selling_price_centavos, reorder_level, '
+          'track_inventory, is_active, created_at, updated_at FROM products',
+        );
+        await customStatement('DROP TABLE products');
+        await customStatement('ALTER TABLE products_new RENAME TO products');
       }
     },
     beforeOpen: (details) async {

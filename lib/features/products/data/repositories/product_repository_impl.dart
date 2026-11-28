@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../synchronization/data/repositories/sync_outbox_repository.dart';
 import '../../domain/entities/product.dart' as domain;
 import '../../domain/repositories/product_repository.dart';
 
@@ -93,37 +94,112 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<void> saveProduct(domain.Product product) async {
-    await database
-        .into(database.products)
-        .insertOnConflictUpdate(
-          ProductsCompanion(
-            businessId: Value(businessId),
-            id: Value(product.id),
-            categoryId: Value(product.categoryId),
-            name: Value(product.name),
-            sku: Value(product.sku),
-            description: Value(product.description),
-            costPriceCentavos: Value(product.costPriceCentavos),
-            sellingPriceCentavos: Value(product.sellingPriceCentavos),
-            reorderLevel: Value(product.reorderLevel),
-            trackInventory: Value(product.trackInventory),
-            isActive: Value(product.isActive),
-            createdAt: Value(product.createdAt),
-            updatedAt: Value(product.updatedAt),
-          ),
-        );
+    await database.transaction(() async {
+      await _ensureCategoryBelongsToBusiness(product.categoryId);
+
+      final existing = await (database.select(
+        database.products,
+      )..where((row) => row.id.equals(product.id))).getSingleOrNull();
+
+      if (existing != null && existing.businessId != businessId) {
+        throw StateError('Product belongs to a different business.');
+      }
+
+      final values = ProductsCompanion(
+        categoryId: Value(product.categoryId),
+        name: Value(product.name),
+        sku: Value(product.sku),
+        description: Value(product.description),
+        costPriceCentavos: Value(product.costPriceCentavos),
+        sellingPriceCentavos: Value(product.sellingPriceCentavos),
+        reorderLevel: Value(product.reorderLevel),
+        trackInventory: Value(product.trackInventory),
+        isActive: Value(product.isActive),
+        createdAt: Value(product.createdAt),
+        updatedAt: Value(product.updatedAt),
+      );
+
+      if (existing == null) {
+        await database
+            .into(database.products)
+            .insert(
+              values.copyWith(
+                businessId: Value(businessId),
+                id: Value(product.id),
+              ),
+            );
+      } else {
+        await (database.update(database.products)..where(
+              (row) =>
+                  row.id.equals(product.id) & row.businessId.equals(businessId),
+            ))
+            .write(values);
+      }
+
+      await SyncOutboxRepository(database).enqueue(
+        entityType: 'product',
+        entityId: product.id,
+        operation: existing == null ? 'create' : 'upsert',
+        payload: {
+          'id': product.id,
+          'businessId': businessId,
+          'categoryId': product.categoryId,
+          'name': product.name,
+          'sku': product.sku,
+          'description': product.description,
+          'costPriceCentavos': product.costPriceCentavos,
+          'sellingPriceCentavos': product.sellingPriceCentavos,
+          'reorderLevel': product.reorderLevel,
+          'trackInventory': product.trackInventory,
+          'isActive': product.isActive,
+          'createdAt': product.createdAt,
+          'updatedAt': product.updatedAt,
+        },
+      );
+    });
+  }
+
+  Future<void> _ensureCategoryBelongsToBusiness(String? categoryId) async {
+    if (categoryId == null) return;
+
+    final category =
+        await (database.select(database.categories)
+              ..where((row) => row.id.equals(categoryId))
+              ..where((row) => row.businessId.equals(businessId)))
+            .getSingleOrNull();
+
+    if (category == null) {
+      throw StateError(
+        'Category belongs to a different business or is missing.',
+      );
+    }
   }
 
   @override
   Future<void> archiveProduct(String id) async {
-    await (database.update(database.products)
-          ..where((product) => product.id.equals(id))
-          ..where((product) => product.businessId.equals(businessId)))
-        .write(
-          ProductsCompanion(
-            isActive: const Value(false),
-            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          ),
-        );
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final updated =
+        await (database.update(database.products)
+              ..where((product) => product.id.equals(id))
+              ..where((product) => product.businessId.equals(businessId)))
+            .write(
+              ProductsCompanion(
+                isActive: const Value(false),
+                updatedAt: Value(now),
+              ),
+            );
+    if (updated == 0) return;
+
+    await SyncOutboxRepository(database).enqueue(
+      entityType: 'product',
+      entityId: id,
+      operation: 'upsert',
+      payload: {
+        'id': id,
+        'businessId': businessId,
+        'isActive': false,
+        'updatedAt': now,
+      },
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../synchronization/data/repositories/sync_outbox_repository.dart';
 import '../../domain/entities/inventory_movement.dart' as domain;
 import '../../domain/repositories/inventory_repository.dart';
 
@@ -98,6 +99,24 @@ class InventoryRepositoryImpl implements InventoryRepository {
               createdAt: movement.createdAt,
             ),
           );
+
+      await SyncOutboxRepository(database).enqueue(
+        entityType: 'inventory_movement',
+        entityId: movement.id,
+        operation: 'create',
+        payload: {
+          'id': movement.id,
+          'businessId': businessId,
+          'productId': movement.productId,
+          'productNameSnapshot': movement.productNameSnapshot,
+          'movementType': movement.movementType,
+          'quantityDelta': movement.quantityDelta,
+          'referenceType': movement.referenceType,
+          'referenceId': movement.referenceId,
+          'note': movement.note,
+          'createdAt': movement.createdAt,
+        },
+      );
     });
   }
 }

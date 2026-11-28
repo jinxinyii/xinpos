@@ -2,13 +2,18 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../synchronization/data/repositories/sync_outbox_repository.dart';
 
 class ProductCreationService {
   final AppDatabase database;
+  final String businessId;
   final Uuid uuid;
 
-  ProductCreationService({required this.database, Uuid? uuid})
-    : uuid = uuid ?? const Uuid();
+  ProductCreationService({
+    required this.database,
+    required this.businessId,
+    Uuid? uuid,
+  }) : uuid = uuid ?? const Uuid();
 
   Future<String> createProduct({
     required String name,
@@ -49,10 +54,10 @@ class ProductCreationService {
     await database.transaction(() async {
       if (categoryId != null) {
         final category =
-            await (database.select(database.categories)..where(
-                  (table) =>
-                      table.id.equals(categoryId) & table.isActive.equals(true),
-                ))
+            await (database.select(database.categories)
+                  ..where((table) => table.id.equals(categoryId))
+                  ..where((table) => table.businessId.equals(businessId))
+                  ..where((table) => table.isActive.equals(true)))
                 .getSingleOrNull();
 
         if (category == null) {
@@ -61,9 +66,11 @@ class ProductCreationService {
       }
 
       if (normalizedSku != null && normalizedSku.isNotEmpty) {
-        final existingSku = await (database.select(
-          database.products,
-        )..where((table) => table.sku.equals(normalizedSku))).getSingleOrNull();
+        final existingSku =
+            await (database.select(database.products)
+                  ..where((table) => table.sku.equals(normalizedSku))
+                  ..where((table) => table.businessId.equals(businessId)))
+                .getSingleOrNull();
 
         if (existingSku != null) {
           throw StateError('This SKU is already assigned to another product.');
@@ -74,6 +81,7 @@ class ProductCreationService {
           .into(database.products)
           .insert(
             ProductsCompanion(
+              businessId: Value(businessId),
               id: Value(productId),
               categoryId: Value(categoryId),
               name: Value(normalizedName),
@@ -97,12 +105,40 @@ class ProductCreationService {
             ),
           );
 
+      await SyncOutboxRepository(database).enqueue(
+        entityType: 'product',
+        entityId: productId,
+        operation: 'upsert',
+        payload: {
+          'id': productId,
+          'businessId': businessId,
+          'categoryId': categoryId,
+          'name': normalizedName,
+          'sku': normalizedSku == null || normalizedSku.isEmpty
+              ? null
+              : normalizedSku,
+          'description':
+              normalizedDescription == null || normalizedDescription.isEmpty
+              ? null
+              : normalizedDescription,
+          'costPriceCentavos': costPriceCentavos,
+          'sellingPriceCentavos': sellingPriceCentavos,
+          'reorderLevel': reorderLevel,
+          'trackInventory': trackInventory,
+          'isActive': true,
+          'createdAt': now,
+          'updatedAt': now,
+        },
+      );
+
       if (initialStock > 0) {
+        final movementId = uuid.v4();
         await database
             .into(database.inventoryMovements)
             .insert(
               InventoryMovementsCompanion.insert(
-                id: uuid.v4(),
+                businessId: Value(businessId),
+                id: movementId,
                 productId: Value(productId),
                 productNameSnapshot: normalizedName,
                 movementType: 'opening_stock',
@@ -113,6 +149,19 @@ class ProductCreationService {
                 createdAt: now,
               ),
             );
+
+        await SyncOutboxRepository(database).enqueue(
+          entityType: 'inventory_movement',
+          entityId: movementId,
+          operation: 'create',
+          payload: {
+            'businessId': businessId,
+            'productId': productId,
+            'movementType': 'opening_stock',
+            'quantityDelta': initialStock,
+            'createdAt': now,
+          },
+        );
       }
     });
 

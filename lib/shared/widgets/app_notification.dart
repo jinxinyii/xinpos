@@ -16,24 +16,43 @@ class AppSnackBar extends SnackBar {
     double? width,
   }) : super(
          content: _buildContent(context, content, backgroundColor),
-         backgroundColor: Theme.of(context).colorScheme.inverseSurface,
-         elevation: 6,
-         margin: MediaQuery.sizeOf(context).width >= 600
-             ? null
-             : const EdgeInsets.fromLTRB(16, 0, 16, 16),
-         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-         shape: RoundedRectangleBorder(
-           borderRadius: BorderRadius.circular(14),
-           side: BorderSide(
-             color: Theme.of(context).colorScheme.outlineVariant
-                 .withValues(alpha: 0.45),
-           ),
-         ),
-         behavior: SnackBarBehavior.floating,
+         backgroundColor:
+             backgroundColor ?? Theme.of(context).colorScheme.inverseSurface,
+         elevation: elevation ?? 6,
+         margin: margin ?? _topMargin(context),
+         padding:
+             padding ??
+             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+         shape:
+             shape ??
+             RoundedRectangleBorder(
+               borderRadius: BorderRadius.circular(14),
+               side: BorderSide(
+                 color: Theme.of(context).colorScheme.outlineVariant
+                     .withValues(alpha: 0.45),
+               ),
+             ),
+         behavior: behavior ?? SnackBarBehavior.floating,
          duration: duration ?? const Duration(milliseconds: 1600),
          dismissDirection: dismissDirection ?? DismissDirection.horizontal,
-         width: MediaQuery.sizeOf(context).width >= 600 ? 360 : null,
+         // A floating SnackBar uses its bottom margin for vertical placement.
+         // Keeping width null lets the same top positioning work on tablets.
+         width: margin == null ? null : width,
        );
+
+  static EdgeInsets _topMargin(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final horizontal = media.size.width >= 600
+        ? ((media.size.width - 520) / 2).clamp(16.0, 48.0).toDouble()
+        : 16.0;
+    // Leave enough room for the app bar and a two-line message. The previous
+    // offset placed the floating SnackBar too close to the system edge.
+    final bottom = (media.size.height - media.padding.top - 176)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+
+    return EdgeInsets.fromLTRB(horizontal, 0, horizontal, bottom);
+  }
 
   static Widget _buildContent(
     BuildContext context,
@@ -105,10 +124,7 @@ class AppNotification {
           behavior: SnackBarBehavior.floating,
           backgroundColor: colors.inverseSurface,
           elevation: 6,
-          width: MediaQuery.sizeOf(context).width >= 600 ? 360 : null,
-          margin: MediaQuery.sizeOf(context).width >= 600
-              ? null
-              : const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          margin: AppSnackBar._topMargin(context),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../shared/widgets/app_notification.dart';
 import '../../../../shared/providers/database_provider.dart';
 import '../../data/services/backup_service.dart';
 
@@ -87,7 +88,8 @@ class _BackupSettingsScreenState extends ConsumerState<BackupSettingsScreen> {
       ref.invalidate(databaseProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        AppSnackBar(
+          context: context,
           content: Text('Restore complete. Safety backup: $safetyBackup'),
         ),
       );
@@ -95,8 +97,9 @@ class _BackupSettingsScreenState extends ConsumerState<BackupSettingsScreen> {
     } catch (error) {
       ref.invalidate(databaseProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Restore failed: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(context: context, content: Text('Restore failed: $error')),
+      );
       context.go('/');
     } finally {
       if (mounted) setState(() => _busy = false);

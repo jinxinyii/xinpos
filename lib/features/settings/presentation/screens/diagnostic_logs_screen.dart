@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../../shared/widgets/app_notification.dart';
 import '../../../../core/logging/app_logger.dart';
 
 class DiagnosticLogsScreen extends StatefulWidget {
@@ -25,7 +26,8 @@ class _DiagnosticLogsScreenState extends State<DiagnosticLogsScreen> {
       final exported = await AppLogger.instance.exportLogs();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        AppSnackBar(
+          context: context,
           content: Text(
             exported ? 'Diagnostic logs exported.' : 'Export cancelled.',
           ),
@@ -39,7 +41,10 @@ class _DiagnosticLogsScreenState extends State<DiagnosticLogsScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not export diagnostic logs.')),
+        AppSnackBar(
+          context: context,
+          content: const Text('Could not export diagnostic logs.'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy = false);

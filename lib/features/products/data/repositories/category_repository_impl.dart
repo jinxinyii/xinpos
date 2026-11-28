@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../synchronization/data/repositories/sync_outbox_repository.dart';
 import '../../domain/entities/category.dart' as domain;
 import '../../domain/repositories/category_repository.dart';
 
@@ -61,31 +62,83 @@ class CategoryRepositoryImpl implements CategoryRepository {
 
   @override
   Future<void> saveCategory(domain.Category category) async {
-    await database
-        .into(database.categories)
-        .insertOnConflictUpdate(
-          CategoriesCompanion(
-            businessId: Value(businessId),
-            id: Value(category.id),
-            name: Value(category.name),
-            description: Value(category.description),
-            isActive: Value(category.isActive),
-            createdAt: Value(category.createdAt),
-            updatedAt: Value(category.updatedAt),
-          ),
-        );
+    await database.transaction(() async {
+      final existing = await (database.select(
+        database.categories,
+      )..where((row) => row.id.equals(category.id))).getSingleOrNull();
+
+      if (existing != null && existing.businessId != businessId) {
+        throw StateError('Category belongs to a different business.');
+      }
+
+      final values = CategoriesCompanion(
+        name: Value(category.name),
+        description: Value(category.description),
+        isActive: Value(category.isActive),
+        createdAt: Value(category.createdAt),
+        updatedAt: Value(category.updatedAt),
+      );
+
+      if (existing == null) {
+        await database
+            .into(database.categories)
+            .insert(
+              values.copyWith(
+                businessId: Value(businessId),
+                id: Value(category.id),
+              ),
+            );
+      } else {
+        await (database.update(database.categories)..where(
+              (row) =>
+                  row.id.equals(category.id) &
+                  row.businessId.equals(businessId),
+            ))
+            .write(values);
+      }
+
+      await SyncOutboxRepository(database).enqueue(
+        entityType: 'category',
+        entityId: category.id,
+        operation: existing == null ? 'create' : 'upsert',
+        payload: {
+          'id': category.id,
+          'businessId': businessId,
+          'name': category.name,
+          'description': category.description,
+          'isActive': category.isActive,
+          'createdAt': category.createdAt,
+          'updatedAt': category.updatedAt,
+        },
+      );
+    });
   }
 
   @override
   Future<void> archiveCategory(String id) async {
-    await (database.update(database.categories)
-          ..where((category) => category.id.equals(id))
-          ..where((category) => category.businessId.equals(businessId)))
-        .write(
-          CategoriesCompanion(
-            isActive: const Value(false),
-            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          ),
-        );
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final updated =
+        await (database.update(database.categories)
+              ..where((category) => category.id.equals(id))
+              ..where((category) => category.businessId.equals(businessId)))
+            .write(
+              CategoriesCompanion(
+                isActive: const Value(false),
+                updatedAt: Value(now),
+              ),
+            );
+    if (updated == 0) return;
+
+    await SyncOutboxRepository(database).enqueue(
+      entityType: 'category',
+      entityId: id,
+      operation: 'upsert',
+      payload: {
+        'id': id,
+        'businessId': businessId,
+        'isActive': false,
+        'updatedAt': now,
+      },
+    );
   }
 }

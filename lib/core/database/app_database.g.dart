@@ -905,7 +905,6 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _descriptionMeta = const VerificationMeta(
     'description',

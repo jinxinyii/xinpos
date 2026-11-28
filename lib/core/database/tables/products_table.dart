@@ -15,7 +15,7 @@ class Products extends Table {
 
   TextColumn get name => text().withLength(min: 1, max: 150)();
 
-  TextColumn get sku => text().nullable().unique()();
+  TextColumn get sku => text().nullable()();
 
   TextColumn get description => text().nullable()();
 
@@ -36,4 +36,9 @@ class Products extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {businessId, sku},
+  ];
 }

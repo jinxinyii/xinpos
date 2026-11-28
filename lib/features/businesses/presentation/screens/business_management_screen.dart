@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../shared/widgets/app_notification.dart';
 import '../../domain/entities/business_dataset_summary.dart';
 import '../providers/active_business_provider.dart';
 import '../providers/business_dataset_providers.dart';
@@ -16,7 +18,8 @@ class BusinessManagementScreen extends ConsumerWidget {
   }
 
   void _message(BuildContext context, String value) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(AppSnackBar(context: context, content: Text(value)));
   }
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
@@ -27,6 +30,26 @@ class BusinessManagementScreen extends ConsumerWidget {
     } catch (error) {
       if (context.mounted) {
         _message(context, 'Could not create business: $error');
+      }
+    }
+  }
+
+  Future<void> _open(
+    BuildContext context,
+    WidgetRef ref,
+    BusinessDatasetSummary item,
+  ) async {
+    if (item.isArchived) return;
+    try {
+      await ref
+          .read(activeBusinessProvider.notifier)
+          .setActiveBusiness(item.id);
+      if (!context.mounted) return;
+      _message(context, 'Opened "${item.name}".');
+      context.go('/');
+    } catch (error) {
+      if (context.mounted) {
+        _message(context, 'Could not open business: $error');
       }
     }
   }
@@ -164,7 +187,7 @@ class BusinessManagementScreen extends ConsumerWidget {
                       Text('Current workspace: $activeBusinessName'),
                       const SizedBox(height: 8),
                       const Text(
-                        'Opening and switching businesses will be enabled after checkout, sales, expenses, queue, and reports are fully isolated. This prevents records from being saved to the wrong business.',
+                        'Open a business to work with its own products, inventory, sales, queue, expenses, and reports. Tap an available business below to switch workspaces.',
                       ),
                     ],
                   ),
@@ -216,22 +239,33 @@ class BusinessManagementScreen extends ConsumerWidget {
         title: Text(item.name),
         subtitle: Text(
           isDefault
-              ? 'Original business · Protected'
+              ? isActive
+                    ? 'Current workspace · Original business · Protected'
+                    : 'Original business · Protected · Tap to open'
               : isActive
               ? 'Current workspace'
               : item.isArchived
               ? 'Archived · Data preserved'
-              : 'Business dataset · Switching not enabled yet',
+              : 'Tap to open this business',
         ),
+        onTap: !item.isArchived && !isActive
+            ? () => _open(context, ref, item)
+            : null,
         trailing: isDefault
             ? const Icon(Icons.lock_outline_rounded)
             : PopupMenuButton<String>(
                 onSelected: (action) {
+                  if (action == 'open') _open(context, ref, item);
                   if (action == 'rename') _rename(context, ref, item);
                   if (action == 'toggle') _archive(context, ref, item);
                   if (action == 'delete') _delete(context, ref, item);
                 },
                 itemBuilder: (context) => [
+                  if (!item.isArchived && !isActive)
+                    const PopupMenuItem(
+                      value: 'open',
+                      child: Text('Open business'),
+                    ),
                   if (!item.isArchived)
                     const PopupMenuItem(value: 'rename', child: Text('Rename')),
                   PopupMenuItem(

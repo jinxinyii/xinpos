@@ -56,83 +56,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       }
     });
 
-    final colors = Theme.of(context).colorScheme;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isTabletLayout = screenWidth >= 600;
     final quantity = _cart[product.id]?.quantity ?? 1;
-    final messenger = ScaffoldMessenger.of(context);
-
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: colors.inverseSurface,
-          elevation: 6,
-          width: isTabletLayout ? 360 : null,
-          margin: isTabletLayout
-              ? null
-              : const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: BorderSide(
-              color: colors.outlineVariant.withValues(alpha: 0.45),
-            ),
-          ),
-          duration: const Duration(milliseconds: 1600),
-          dismissDirection: DismissDirection.horizontal,
-          content: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: colors.primaryContainer,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.check_rounded,
-                  color: colors.onPrimaryContainer,
-                  size: 21,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Added to cart',
-                      style: TextStyle(
-                        color: colors.onInverseSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$quantity × ${product.name}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.onInverseSurface.withValues(alpha: 0.78),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.shopping_cart_checkout_outlined,
-                color: colors.onInverseSurface.withValues(alpha: 0.8),
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      );
+    AppNotification.show(
+      context,
+      message: '$quantity × ${product.name} added to cart.',
+    );
   }
 
   void _increaseQuantity(String productId) {

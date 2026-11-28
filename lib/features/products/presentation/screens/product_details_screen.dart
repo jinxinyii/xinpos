@@ -298,7 +298,7 @@ class ProductDetailsScreen extends ConsumerWidget {
                                         Icons.warning_amber_rounded,
                                         size: 18,
                                       ),
-                                      label: const Text('Low stock'),
+                                      label: const Text('Low Stock'),
                                       backgroundColor: Theme.of(context)
                                           .colorScheme
                                           .errorContainer,

@@ -41,7 +41,7 @@ class QueueManagementScreen extends ConsumerWidget {
       _showQueueNotification(
         context,
         error.toString().replaceFirst('Bad state: ', ''),
-        title: 'Queue action failed',
+        title: 'Queue Action Failed',
         isError: true,
       );
     }
@@ -93,7 +93,7 @@ class QueueManagementScreen extends ConsumerWidget {
         title: const Text('Queue Management'),
         actions: [
           IconButton(
-            tooltip: 'Refresh queue',
+            tooltip: 'Refresh Queue',
             onPressed: () {
               ref.invalidate(todayQueueProvider);
               ref.invalidate(todayQueueSummaryProvider);
@@ -235,7 +235,7 @@ class QueueManagementScreen extends ConsumerWidget {
                                           'Bad state: ',
                                           '',
                                         ),
-                                        title: 'Queue action failed',
+                                        title: 'Queue Action Failed',
                                         isError: true,
                                       );
                                     }
@@ -280,7 +280,7 @@ class QueueManagementScreen extends ConsumerWidget {
                                           'Bad state: ',
                                           '',
                                         ),
-                                        title: 'Queue action failed',
+                                        title: 'Queue Action Failed',
                                         isError: true,
                                       );
                                     }
@@ -495,7 +495,7 @@ class _ServingCard extends StatelessWidget {
                     _showQueueNotification(
                       context,
                       'Now serving ${entry!.queueCode}',
-                      title: 'Queue number recalled',
+                      title: 'Queue Number Recalled',
                       icon: Icons.campaign_outlined,
                     );
                   },

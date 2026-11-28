@@ -648,7 +648,7 @@ class _ProfitReportScreenState extends ConsumerState<ProfitReportScreen> {
                 TextButton(
                   onPressed: () =>
                       ref.invalidate(profitReportProvider(_filter)),
-                  child: const Text('Try again'),
+                  child: const Text('Try Again'),
                 ),
               ],
             ),

@@ -10,6 +10,8 @@ Route::post('/auth/login', [AuthController::class, 'login'])->middleware('thrott
 
 Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/sync/changes', [SyncController::class, 'changes'])
+        ->middleware('ability:sync:read');
     Route::post('/sync/batch', [SyncController::class, 'batch'])
         ->middleware('ability:sync:write');
 });

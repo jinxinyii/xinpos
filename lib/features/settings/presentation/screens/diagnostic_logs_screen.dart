@@ -55,7 +55,7 @@ class _DiagnosticLogsScreenState extends State<DiagnosticLogsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear diagnostic logs?'),
+        title: const Text('Clear Diagnostic Logs?'),
         content: const Text(
           'This deletes saved diagnostic logs only. Your products, sales, and database will not be affected.',
         ),
@@ -66,7 +66,7 @@ class _DiagnosticLogsScreenState extends State<DiagnosticLogsScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Clear logs'),
+            child: const Text('Clear Logs'),
           ),
         ],
       ),
@@ -88,12 +88,12 @@ class _DiagnosticLogsScreenState extends State<DiagnosticLogsScreen> {
             icon: const Icon(Icons.refresh),
           ),
           IconButton(
-            tooltip: 'Export logs',
+            tooltip: 'Export Logs',
             onPressed: _busy ? null : _export,
             icon: const Icon(Icons.ios_share),
           ),
           IconButton(
-            tooltip: 'Clear logs',
+            tooltip: 'Clear Logs',
             onPressed: _busy ? null : _clear,
             icon: const Icon(Icons.delete_outline),
           ),

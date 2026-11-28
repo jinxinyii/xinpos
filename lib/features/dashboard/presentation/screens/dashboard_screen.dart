@@ -122,7 +122,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh dashboard',
+            tooltip: 'Refresh Dashboard',
             onPressed: () {
               ref.invalidate(dashboardDataProvider);
               ref.invalidate(salesReportProvider(_filter));
@@ -186,7 +186,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     TextButton.icon(
                       onPressed: () => context.go('/sales/reports'),
                       icon: const Icon(Icons.analytics_outlined, size: 18),
-                      label: const Text('Full report'),
+                      label: const Text('Full Report'),
                     ),
                   ],
                 ),
@@ -316,7 +316,7 @@ class _TodayOverview extends StatelessWidget {
           title: "Today's Recent Sales",
           trailing: TextButton(
             onPressed: () => context.go('/sales'),
-            child: const Text('View all'),
+            child: const Text('View All'),
           ),
           child: data.recentSales.isEmpty
               ? const _EmptyState(
@@ -847,7 +847,7 @@ class _ErrorPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      title: 'Something went wrong',
+      title: 'Something Went Wrong',
       child: Column(
         children: [
           Text(message),
@@ -855,7 +855,7 @@ class _ErrorPanel extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try again'),
+            label: const Text('Try Again'),
           ),
         ],
       ),

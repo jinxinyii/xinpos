@@ -242,7 +242,7 @@ class ProductBarcodesScreen extends ConsumerWidget {
                                   .first,
                             ),
                             trailing: IconButton(
-                              tooltip: 'Remove barcode',
+                              tooltip: 'Remove Barcode',
                               onPressed: () => _deleteBarcode(
                                 context,
                                 ref,

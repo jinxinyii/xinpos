@@ -159,7 +159,7 @@ class _SalesReportsScreenState extends ConsumerState<SalesReportsScreen> {
         title: const Text('Sales Reports'),
         actions: [
           IconButton(
-            tooltip: 'Refresh report',
+            tooltip: 'Refresh Report',
             onPressed: () => ref.invalidate(salesReportProvider(_filter)),
             icon: const Icon(Icons.refresh),
           ),

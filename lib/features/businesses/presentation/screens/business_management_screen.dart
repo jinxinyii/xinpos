@@ -154,7 +154,7 @@ class BusinessManagementScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _create(context, ref),
         icon: const Icon(Icons.add_business_rounded),
-        label: const Text('New business'),
+        label: const Text('New Business'),
       ),
       body: businesses.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -264,7 +264,7 @@ class BusinessManagementScreen extends ConsumerWidget {
                   if (!item.isArchived && !isActive)
                     const PopupMenuItem(
                       value: 'open',
-                      child: Text('Open business'),
+                      child: Text('Open Business'),
                     ),
                   if (!item.isArchived)
                     const PopupMenuItem(value: 'rename', child: Text('Rename')),
@@ -275,7 +275,7 @@ class BusinessManagementScreen extends ConsumerWidget {
                   const PopupMenuDivider(),
                   const PopupMenuItem(
                     value: 'delete',
-                    child: Text('Permanently delete'),
+                    child: Text('Permanently Delete'),
                   ),
                 ],
               ),
@@ -313,13 +313,13 @@ class _BusinessNameDialogState extends State<_BusinessNameDialog> {
     final isRenaming = widget.initial.isNotEmpty;
 
     return AlertDialog(
-      title: Text(isRenaming ? 'Rename business' : 'Create business'),
+      title: Text(isRenaming ? 'Rename Business' : 'Create Business'),
       content: TextField(
         controller: _controller,
         autofocus: true,
         maxLength: 80,
         textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(labelText: 'Business name'),
+        decoration: const InputDecoration(labelText: 'Business Name'),
       ),
       actions: [
         TextButton(
@@ -364,7 +364,7 @@ class _DeleteBusinessDialogState extends State<_DeleteBusinessDialog> {
     final matches = _controller.text.trim() == widget.businessName;
 
     return AlertDialog(
-      title: const Text('Permanently delete business?'),
+      title: const Text('Permanently Delete Business?'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,7 +380,7 @@ class _DeleteBusinessDialogState extends State<_DeleteBusinessDialog> {
             autofocus: true,
             onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(
-              labelText: 'Business name',
+              labelText: 'Business Name',
               border: OutlineInputBorder(),
             ),
           ),
@@ -397,7 +397,7 @@ class _DeleteBusinessDialogState extends State<_DeleteBusinessDialog> {
             backgroundColor: Theme.of(context).colorScheme.error,
             foregroundColor: Theme.of(context).colorScheme.onError,
           ),
-          child: const Text('Delete permanently'),
+          child: const Text('Delete Permanently'),
         ),
       ],
     );

@@ -64,7 +64,7 @@ class _SaleDetailsScreenState extends ConsumerState<SaleDetailsScreen> {
         title: const Text('Receipt Details'),
         actions: [
           IconButton(
-            tooltip: 'Refresh receipt',
+            tooltip: 'Refresh Receipt',
             onPressed: () => ref.invalidate(saleDetailsProvider(widget.saleId)),
             icon: const Icon(Icons.refresh),
           ),

@@ -40,6 +40,15 @@ class SettingsScreen extends StatelessWidget {
           ),
           Card(
             child: ListTile(
+              leading: const Icon(Icons.sync_rounded),
+              title: const Text('Sync Settings'),
+              subtitle: const Text('Connect to and sync with your Laravel API'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/settings/sync'),
+            ),
+          ),
+          Card(
+            child: ListTile(
               leading: const Icon(Icons.backup_outlined),
               title: const Text('Data Backup'),
               subtitle: const Text('Create and export database backups'),

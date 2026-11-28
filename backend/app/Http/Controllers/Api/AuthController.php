@@ -62,6 +62,7 @@ class AuthController extends Controller
         return response()->json([
             'token' => $user->createToken($data['device_name'], ['sync:read', 'sync:write'])->plainTextToken,
             'user' => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email],
+            'business' => $user->businesses()->orderBy('created_at')->first(['id', 'name']),
         ]);
     }
 

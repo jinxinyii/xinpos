@@ -202,7 +202,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     items: [
                       const DropdownMenuItem<String>(
                         value: null,
-                        child: Text('No category'),
+                        child: Text('No Category'),
                       ),
                       ...categories.map(
                         (category) => DropdownMenuItem<String>(

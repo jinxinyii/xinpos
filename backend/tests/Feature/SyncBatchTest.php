@@ -21,6 +21,12 @@ class SyncBatchTest extends TestCase
 
         $token = $registration->json('token');
         $businessId = $registration->json('business.id');
+        $this->postJson('/api/auth/login', [
+            'email' => 'owner@example.test',
+            'password' => 'correct-horse-battery-staple',
+            'device_name' => 'second xinPOS test device',
+        ])->assertOk()
+            ->assertJsonPath('business.id', $businessId);
         $change = [
             'id' => 'ab2b0f8a-238a-49c0-8423-34d42d17e992',
             'entityType' => 'product',
@@ -31,6 +37,11 @@ class SyncBatchTest extends TestCase
                 'businessId' => $businessId,
                 'name' => 'Iced tea',
                 'sku' => 'TEA-001',
+                'costPriceCentavos' => 1000,
+                'sellingPriceCentavos' => 1500,
+                'reorderLevel' => 0,
+                'trackInventory' => true,
+                'isActive' => true,
             ],
         ];
 
@@ -44,5 +55,15 @@ class SyncBatchTest extends TestCase
             ->assertOk();
 
         $this->assertDatabaseCount('sync_changes', 1);
+        $this->assertDatabaseHas('products', [
+            'id' => $change['entityId'],
+            'business_id' => $businessId,
+            'sku' => 'TEA-001',
+        ]);
+        $this->withToken($token)
+            ->getJson("/api/sync/changes?business_id={$businessId}")
+            ->assertOk()
+            ->assertJsonPath('changes.0.id', $change['id'])
+            ->assertJsonPath('changes.0.payload.name', 'Iced tea');
     }
 }

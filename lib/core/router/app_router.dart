@@ -20,6 +20,8 @@ import '../../features/settings/presentation/screens/printer_settings_screen.dar
 import '../../features/settings/presentation/screens/backup_settings_screen.dart';
 import '../../features/settings/presentation/screens/diagnostic_logs_screen.dart';
 import '../../features/businesses/presentation/screens/business_management_screen.dart';
+import '../../features/synchronization/presentation/screens/sync_settings_screen.dart';
+import '../../features/synchronization/presentation/screens/sync_account_screen.dart';
 import '../../features/reports/presentation/screens/profit_report_screen.dart';
 import 'main_scaffold.dart';
 
@@ -162,6 +164,14 @@ final GoRouter appRouter = GoRouter(
                 GoRoute(
                   path: 'businesses',
                   builder: (context, state) => const BusinessManagementScreen(),
+                ),
+                GoRoute(
+                  path: 'sync',
+                  builder: (context, state) => const SyncSettingsScreen(),
+                ),
+                GoRoute(
+                  path: 'sync/account',
+                  builder: (context, state) => const SyncAccountScreen(),
                 ),
               ],
             ),

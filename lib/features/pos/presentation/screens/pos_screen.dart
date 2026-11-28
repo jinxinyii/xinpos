@@ -1020,7 +1020,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               ),
             ),
             IconButton(
-              tooltip: 'Decrease quantity',
+              tooltip: 'Decrease Quantity',
               visualDensity: VisualDensity.compact,
               onPressed: _isCheckingOut
                   ? null
@@ -1032,7 +1032,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               child: Text('${line.quantity}', textAlign: TextAlign.center),
             ),
             IconButton(
-              tooltip: 'Increase quantity',
+              tooltip: 'Increase Quantity',
               visualDensity: VisualDensity.compact,
               onPressed: _isCheckingOut
                   ? null

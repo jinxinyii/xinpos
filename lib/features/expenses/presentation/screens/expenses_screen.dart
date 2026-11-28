@@ -125,7 +125,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete expense?'),
+        title: const Text('Delete Expense?'),
         content: Text(
           'Delete "${expense.description}"? This cannot be undone.',
         ),
@@ -193,7 +193,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                 Text('$error', textAlign: TextAlign.center),
                 TextButton(
                   onPressed: () => ref.invalidate(expensesProvider),
-                  child: const Text('Try again'),
+                  child: const Text('Try Again'),
                 ),
               ],
             ),

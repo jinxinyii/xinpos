@@ -251,7 +251,7 @@ class _EditProductFormState extends ConsumerState<_EditProductForm> {
               items: [
                 const DropdownMenuItem<String>(
                   value: null,
-                  child: Text('No category'),
+                  child: Text('No Category'),
                 ),
                 ...widget.categories.map(
                   (category) => DropdownMenuItem<String>(

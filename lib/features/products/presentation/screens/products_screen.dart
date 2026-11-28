@@ -63,7 +63,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           IconButton(
             onPressed: _refreshProducts,
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh products',
+            tooltip: 'Refresh Products',
           ),
         ],
       ),
@@ -109,14 +109,14 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               data: (items) => DropdownButtonFormField<String>(
                 initialValue: _categoryId,
                 decoration: const InputDecoration(
-                  labelText: 'Filter by category',
+                  labelText: 'Filter by Category',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.category_outlined),
                 ),
                 items: [
                   const DropdownMenuItem<String>(
                     value: null,
-                    child: Text('All categories'),
+                    child: Text('All Categories'),
                   ),
                   ...items.map(
                     (category) => DropdownMenuItem<String>(
@@ -190,7 +190,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                   _categoryId = null;
                                 });
                               },
-                              child: const Text('Clear filters'),
+                              child: const Text('Clear Filters'),
                             ),
                         ],
                       ),

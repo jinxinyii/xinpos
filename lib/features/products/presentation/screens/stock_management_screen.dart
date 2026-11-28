@@ -165,7 +165,7 @@ class StockManagementScreen extends ConsumerWidget {
                                       Icons.warning_amber_rounded,
                                       size: 18,
                                     ),
-                                    label: const Text('Low stock'),
+                                    label: const Text('Low Stock'),
                                     backgroundColor: Theme.of(context)
                                         .colorScheme
                                         .errorContainer,
@@ -395,7 +395,7 @@ class _MovementDialogState extends State<_MovementDialog> {
               controller: _noteController,
               maxLines: 2,
               decoration: const InputDecoration(
-                labelText: 'Note (optional)',
+                labelText: 'Note (Optional)',
                 hintText: 'Reason for this stock movement',
                 border: OutlineInputBorder(),
               ),

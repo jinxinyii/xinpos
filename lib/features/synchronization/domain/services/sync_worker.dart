@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import '../../../../core/database/app_database.dart';
 import '../../data/repositories/sync_outbox_repository.dart';
 import '../../data/services/sync_api_client.dart';
 import '../../data/services/sync_settings_service.dart';
@@ -16,49 +19,92 @@ class SyncResult {
 
 class SyncWorker {
   SyncWorker({
-    required SyncOutboxRepository outbox,
-    required SyncSettingsService settings,
-    required SyncApiClient apiClient,
-  }) : _outbox = outbox,
-       _settings = settings,
-       _apiClient = apiClient;
+    required this.outbox,
+    required this.settings,
+    required this.apiClient,
+  });
 
-  final SyncOutboxRepository _outbox;
-  final SyncSettingsService _settings;
-  final SyncApiClient _apiClient;
+  final SyncOutboxRepository outbox;
+  final SyncSettingsService settings;
+  final SyncApiClient apiClient;
 
   Future<SyncResult> syncPending() async {
-    final configuration = await _settings.read();
+    final configuration = await settings.read();
     if (configuration == null) {
       return const SyncResult(sent: 0, failed: 0, isConfigured: false);
     }
 
-    final pending = await _outbox.pending();
-    if (pending.isEmpty) return const SyncResult(sent: 0, failed: 0, isConfigured: true);
+    final pending = await outbox.pending();
+    if (pending.isEmpty) {
+      return const SyncResult(sent: 0, failed: 0, isConfigured: true);
+    }
 
+    final mappedChanges = <SyncOutboxData>[];
+    final unmappedChanges = <SyncOutboxData>[];
     try {
-      final acceptedIds = await _apiClient.submitBatch(
+      final mappings = await settings.businessMappings();
+      for (final change in pending) {
+        final payload = jsonDecode(change.payloadJson);
+        if (payload is! Map<String, dynamic> || payload['businessId'] is! String) {
+          unmappedChanges.add(change);
+          continue;
+        }
+        final remoteBusinessId = mappings[payload['businessId'] as String];
+        if (remoteBusinessId == null) {
+          unmappedChanges.add(change);
+          continue;
+        }
+        payload['localBusinessId'] = payload['businessId'];
+        payload['businessId'] = remoteBusinessId;
+        mappedChanges.add(change.copyWith(payloadJson: jsonEncode(payload)));
+      }
+      for (final change in unmappedChanges) {
+        await outbox.recordFailure(
+          change.id,
+          'No server business is linked to this local business.',
+        );
+      }
+      if (mappedChanges.isEmpty) {
+        return SyncResult(
+          sent: 0,
+          failed: unmappedChanges.length,
+          isConfigured: true,
+        );
+      }
+
+      final acceptedIds = await apiClient.submitBatch(
         apiBaseUrl: configuration.apiBaseUrl,
         accessToken: configuration.accessToken,
-        changes: pending,
+        changes: mappedChanges,
       );
       var sent = 0;
       var failed = 0;
-      for (final change in pending) {
+      for (final change in mappedChanges) {
         if (acceptedIds.contains(change.id)) {
-          await _outbox.markSynced(change.id);
+          await outbox.markSynced(change.id);
           sent++;
         } else {
-          await _outbox.recordFailure(change.id, 'The server did not accept this change.');
+          await outbox.recordFailure(
+            change.id,
+            'The server did not accept this change.',
+          );
           failed++;
         }
       }
-      return SyncResult(sent: sent, failed: failed, isConfigured: true);
+      return SyncResult(
+        sent: sent,
+        failed: failed + unmappedChanges.length,
+        isConfigured: true,
+      );
     } catch (error) {
-      for (final change in pending) {
-        await _outbox.recordFailure(change.id, error);
+      for (final change in mappedChanges) {
+        await outbox.recordFailure(change.id, error);
       }
-      return SyncResult(sent: 0, failed: pending.length, isConfigured: true);
+      return SyncResult(
+        sent: 0,
+        failed: mappedChanges.length + unmappedChanges.length,
+        isConfigured: true,
+      );
     }
   }
 }

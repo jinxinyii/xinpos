@@ -221,7 +221,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
         title: const Text('Printer Setup'),
         actions: [
           IconButton(
-            tooltip: 'Refresh paired devices',
+            tooltip: 'Refresh Paired Devices',
             onPressed: _busy || _loading ? null : _loadDevices,
             icon: const Icon(Icons.refresh),
           ),
@@ -335,7 +335,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                         maxLength: 32,
                         textCapitalization: TextCapitalization.words,
                         decoration: const InputDecoration(
-                          labelText: 'Business name',
+                          labelText: 'Business Name',
                           hintText: 'e.g. ETP STORE',
                           border: OutlineInputBorder(),
                           counterText: '',

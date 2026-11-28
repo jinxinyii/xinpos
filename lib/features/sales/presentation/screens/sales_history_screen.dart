@@ -44,12 +44,12 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
         title: const Text('Sales History'),
         actions: [
           IconButton(
-            tooltip: 'Sales reports',
+            tooltip: 'Sales Reports',
             onPressed: () => context.push('/sales/reports'),
             icon: const Icon(Icons.analytics_outlined),
           ),
           IconButton(
-            tooltip: 'Refresh sales',
+            tooltip: 'Refresh Sales',
             onPressed: () => ref.invalidate(salesHistoryProvider(_search)),
             icon: const Icon(Icons.refresh),
           ),

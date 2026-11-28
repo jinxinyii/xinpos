@@ -57,7 +57,7 @@ class _BackupSettingsScreenState extends ConsumerState<BackupSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Restore backup?'),
+        title: const Text('Restore Backup?'),
         content: const Text(
           'Restoring replaces the current xinPOS database with the selected '
           'backup. A safety backup of the current database will be created '
@@ -111,7 +111,7 @@ class _BackupSettingsScreenState extends ConsumerState<BackupSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete this backup?'),
+        title: const Text('Delete This Backup?'),
         content: Text(
           'Delete ${record.fileName} from xinPOS private storage? '
           'Any exported copy in Downloads or cloud storage will remain untouched.',
@@ -152,7 +152,7 @@ class _BackupSettingsScreenState extends ConsumerState<BackupSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete all manual backups?'),
+        title: const Text('Delete All Manual Backups?'),
         content: Text(
           'This will delete $manualCount manual backup${manualCount == 1 ? '' : 's'} '
           'from xinPOS private storage. Automatic backups and exported copies '
@@ -165,7 +165,7 @@ class _BackupSettingsScreenState extends ConsumerState<BackupSettingsScreen> {
           ),
           FilledButton.tonal(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete all'),
+            child: const Text('Delete All'),
           ),
         ],
       ),
@@ -292,7 +292,7 @@ class _BackupSettingsScreenState extends ConsumerState<BackupSettingsScreen> {
                 TextButton.icon(
                   onPressed: _busy ? null : _deleteAllManualBackups,
                   icon: const Icon(Icons.delete_sweep_outlined),
-                  label: const Text('Delete manual'),
+                  label: const Text('Delete Manual'),
                 ),
             ],
           ),
@@ -324,13 +324,13 @@ class _BackupSettingsScreenState extends ConsumerState<BackupSettingsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        tooltip: 'Save backup to device',
+                        tooltip: 'Save Backup to Device',
                         icon: const Icon(Icons.download_outlined),
                         onPressed: _busy ? null : () => _share(record),
                       ),
                       if (!record.automatic)
                         IconButton(
-                          tooltip: 'Delete manual backup',
+                          tooltip: 'Delete Manual Backup',
                           icon: const Icon(Icons.delete_outline_rounded),
                           onPressed: _busy
                               ? null

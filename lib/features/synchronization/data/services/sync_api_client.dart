@@ -13,7 +13,8 @@ class SyncApiException implements Exception {
 }
 
 class SyncApiClient {
-  SyncApiClient({HttpClient? httpClient}) : _httpClient = httpClient ?? HttpClient();
+  SyncApiClient({HttpClient? httpClient})
+    : _httpClient = httpClient ?? HttpClient();
 
   final HttpClient _httpClient;
 
@@ -30,28 +31,36 @@ class SyncApiClient {
       ..set(HttpHeaders.authorizationHeader, 'Bearer $accessToken')
       ..set(HttpHeaders.acceptHeader, 'application/json')
       ..contentType = ContentType.json;
-    request.write(jsonEncode({
-      'changes': changes
-          .map((change) => {
+    request.write(
+      jsonEncode({
+        'changes': changes
+            .map(
+              (change) => {
                 'id': change.id,
                 'entityType': change.entityType,
                 'entityId': change.entityId,
                 'operation': change.operation,
                 'payload': jsonDecode(change.payloadJson),
                 'createdAt': change.createdAt,
-              })
-          .toList(),
-    }));
+              },
+            )
+            .toList(),
+      }),
+    );
 
     final response = await request.close();
     final body = await utf8.decoder.bind(response).join();
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw SyncApiException('Sync request failed (${response.statusCode}): $body');
+      throw SyncApiException(
+        'Sync request failed (${response.statusCode}): $body',
+      );
     }
 
     final decoded = jsonDecode(body);
     if (decoded is! Map<String, dynamic> || decoded['acceptedIds'] is! List) {
-      throw const SyncApiException('Sync response did not include acceptedIds.');
+      throw const SyncApiException(
+        'Sync response did not include acceptedIds.',
+      );
     }
 
     return decoded['acceptedIds'].whereType<String>().toSet();

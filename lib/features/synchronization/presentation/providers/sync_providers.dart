@@ -21,6 +21,7 @@ final syncAuthServiceProvider = Provider<SyncAuthService>((ref) {
 
 final syncWorkerProvider = Provider<SyncWorker>((ref) {
   return SyncWorker(
+    database: ref.watch(databaseProvider),
     outbox: ref.watch(syncOutboxRepositoryProvider),
     settings: ref.watch(syncSettingsServiceProvider),
     apiClient: SyncApiClient(),

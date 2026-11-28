@@ -64,11 +64,13 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
       final result = await ref.read(syncWorkerProvider).syncPending();
       ref.invalidate(pendingSyncCountProvider);
       _message(
-        result.failed > 0
-            ? 'Synced ${result.sent}; ${result.failed} changes will retry later.'
-            : result.sent == 0
-            ? 'No pending changes to sync.'
-            : 'Synced ${result.sent} changes.',
+        result.errorMessage != null
+            ? 'Sent ${result.sent}, received ${result.received}. Sync stopped: ${result.errorMessage}'
+            : result.failed > 0
+            ? 'Sent ${result.sent}, received ${result.received}; ${result.failed} changes will retry later.'
+            : result.sent == 0 && result.received == 0
+            ? 'No changes to sync.'
+            : 'Sent ${result.sent} and received ${result.received} changes.',
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -128,7 +130,10 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                 OutlinedButton.icon(
                   onPressed: _busy
                       ? null
-                      : () => context.push('/settings/sync/account'),
+                      : () async {
+                          await context.push('/settings/sync/account');
+                          await _load();
+                        },
                   icon: const Icon(Icons.account_circle_outlined),
                   label: const Text('Sign In or Create Sync Account'),
                 ),
@@ -141,7 +146,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.sync_rounded),
-                  label: Text(_busy ? 'Syncing…' : 'Sync now'),
+                  label: Text(_busy ? 'Syncing…' : 'Sync Now'),
                 ),
               ],
             ),

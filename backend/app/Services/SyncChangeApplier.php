@@ -18,6 +18,7 @@ class SyncChangeApplier
             'category' => $this->applyCategory($business, $change['entityId'], $payload),
             'product' => $this->applyProduct($business, $change['entityId'], $payload),
             'inventory_movement' => $this->applyInventoryMovement($business, $change['entityId'], $payload),
+            'sale' => $this->applySale($business, $change['entityId'], $payload),
             default => throw ValidationException::withMessages([
                 'changes' => ["Unsupported entity type: {$change['entityType']}"],
             ]),
@@ -99,5 +100,70 @@ class SyncChangeApplier
                 'created_at' => now(),
             ],
         );
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function applySale(Business $business, string $id, array $payload): void
+    {
+        if (! isset($payload['receiptNumber'], $payload['subtotalCentavos'], $payload['totalCentavos'], $payload['soldAt'], $payload['items'], $payload['payment'])) {
+            throw ValidationException::withMessages(['changes' => ['Sales require a receipt, totals, items, and payment.']]);
+        }
+
+        DB::table('sales')->updateOrInsert(
+            ['id' => $id, 'business_id' => $business->id],
+            [
+                'receipt_number' => $payload['receiptNumber'],
+                'status' => $payload['status'] ?? 'completed',
+                'subtotal_centavos' => $payload['subtotalCentavos'],
+                'discount_centavos' => $payload['discountCentavos'] ?? 0,
+                'total_centavos' => $payload['totalCentavos'],
+                'sold_at' => Carbon::createFromTimestampMs($payload['soldAt']),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ],
+        );
+        foreach ($payload['items'] as $item) {
+            if (! is_array($item) || ! isset($item['id'], $item['productName'], $item['quantity'], $item['unitPriceCentavos'], $item['unitCostCentavos'], $item['lineTotalCentavos'])) {
+                throw ValidationException::withMessages(['changes' => ['A sale item is incomplete.']]);
+            }
+            DB::table('sale_items')->updateOrInsert(
+                ['id' => $item['id']],
+                [
+                    'sale_id' => $id,
+                    'product_id' => $item['productId'] ?? null,
+                    'product_name' => $item['productName'],
+                    'sku' => $item['sku'] ?? null,
+                    'quantity' => $item['quantity'],
+                    'unit_price_centavos' => $item['unitPriceCentavos'],
+                    'unit_cost_centavos' => $item['unitCostCentavos'],
+                    'line_total_centavos' => $item['lineTotalCentavos'],
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ],
+            );
+        }
+        $payment = $payload['payment'];
+        if (! is_array($payment) || ! isset($payment['id'], $payment['method'], $payment['amountCentavos'], $payment['paidAt'])) {
+            throw ValidationException::withMessages(['changes' => ['A sale payment is incomplete.']]);
+        }
+        DB::table('payments')->updateOrInsert(
+            ['id' => $payment['id']],
+            [
+                'sale_id' => $id,
+                'method' => $payment['method'],
+                'amount_centavos' => $payment['amountCentavos'],
+                'amount_tendered_centavos' => $payment['amountTenderedCentavos'] ?? null,
+                'reference_number' => $payment['referenceNumber'] ?? null,
+                'paid_at' => Carbon::createFromTimestampMs($payment['paidAt']),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ],
+        );
+        foreach ($payload['inventoryMovements'] ?? [] as $movement) {
+            if (! is_array($movement) || ! isset($movement['id'], $movement['productId'], $movement['movementType'], $movement['quantityDelta'], $movement['createdAt'])) {
+                throw ValidationException::withMessages(['changes' => ['A sale inventory movement is incomplete.']]);
+            }
+            $this->applyInventoryMovement($business, $movement['id'], $movement);
+        }
     }
 }

@@ -69,12 +69,15 @@ class _SyncAccountScreenState extends ConsumerState<SyncAccountScreen> {
               remoteBusinessId: account.businessId!,
             );
       }
+      final syncResult = await ref.read(syncWorkerProvider).syncPending();
       if (!mounted) return;
       ref.invalidate(pendingSyncCountProvider);
       _message(
-        account.businessName == null
-            ? 'Connected as ${account.email}.'
-            : 'Connected to ${account.businessName}.',
+        syncResult.errorMessage != null
+            ? 'Connected, but the initial sync stopped: ${syncResult.errorMessage}'
+            : account.businessName == null
+            ? 'Connected as ${account.email}. Received ${syncResult.received} changes.'
+            : 'Connected to ${account.businessName}. Received ${syncResult.received} changes.',
       );
       Navigator.of(context).pop();
     } catch (error) {

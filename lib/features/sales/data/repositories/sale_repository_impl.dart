@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart' hide QueueEntry;
+import '../../../synchronization/data/repositories/sync_outbox_repository.dart';
 import '../../domain/entities/queue_entry.dart';
 import '../../domain/entities/queue_summary.dart';
 import '../../domain/entities/sale_checkout_item.dart';
@@ -250,6 +251,73 @@ class SaleRepositoryImpl implements SaleRepository {
               businessId: Value(businessId),
             ),
           );
+
+      final syncedItems = await (database.select(database.saleItems)
+            ..where((item) => item.saleId.equals(saleId))
+            ..where((item) => item.businessId.equals(businessId)))
+          .get();
+      final syncedPayment = await (database.select(database.payments)
+            ..where((payment) => payment.saleId.equals(saleId))
+            ..where((payment) => payment.businessId.equals(businessId)))
+          .getSingle();
+      final syncedMovements = await (database.select(database.inventoryMovements)
+            ..where((movement) => movement.referenceId.equals(saleId))
+            ..where((movement) => movement.referenceType.equals('sale'))
+            ..where((movement) => movement.businessId.equals(businessId)))
+          .get();
+      await SyncOutboxRepository(database).enqueue(
+        entityType: 'sale',
+        entityId: saleId,
+        operation: 'create',
+        payload: {
+          'businessId': businessId,
+          'receiptNumber': receiptNumber,
+          'status': 'completed',
+          'subtotalCentavos': subtotalCentavos,
+          'discountCentavos': 0,
+          'totalCentavos': totalCentavos,
+          'soldAt': now,
+          'createdAt': now,
+          'updatedAt': now,
+          'items': syncedItems
+              .map(
+                (item) => {
+                  'id': item.id,
+                  'productId': item.productId,
+                  'productName': item.productName,
+                  'sku': item.sku,
+                  'quantity': item.quantity,
+                  'unitPriceCentavos': item.unitPriceCentavos,
+                  'unitCostCentavos': item.unitCostCentavos,
+                  'lineTotalCentavos': item.lineTotalCentavos,
+                },
+              )
+              .toList(),
+          'payment': {
+            'id': syncedPayment.id,
+            'method': syncedPayment.method,
+            'amountCentavos': syncedPayment.amountCentavos,
+            'amountTenderedCentavos': syncedPayment.amountTenderedCentavos,
+            'referenceNumber': syncedPayment.referenceNumber,
+            'paidAt': syncedPayment.paidAt,
+          },
+          'inventoryMovements': syncedMovements
+              .map(
+                (movement) => {
+                  'id': movement.id,
+                  'productId': movement.productId,
+                  'productNameSnapshot': movement.productNameSnapshot,
+                  'movementType': movement.movementType,
+                  'quantityDelta': movement.quantityDelta,
+                  'referenceType': movement.referenceType,
+                  'referenceId': movement.referenceId,
+                  'note': movement.note,
+                  'createdAt': movement.createdAt,
+                },
+              )
+              .toList(),
+        },
+      );
 
       return SaleCheckoutResult(
         saleId: saleId,
